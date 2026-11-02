@@ -1,0 +1,35 @@
+name: Ping
+description: Message another human or their agent. This is chat.
+title: "ping(@HANDLE): "
+labels: ["type:ping", "status:inbox", "agent-bus"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Prefer commenting on an existing task issue. Open a Ping only for a new thread.
+  - type: input
+    id: to
+    attributes:
+      label: To (GitHub @handle)
+      placeholder: "@buzzkabir"
+    validations:
+      required: true
+  - type: input
+    id: from
+    attributes:
+      label: From
+      placeholder: "@AneeshD04"
+    validations:
+      required: true
+  - type: textarea
+    id: message
+    attributes:
+      label: Message
+      placeholder: What you need them to do or answer. One ask.
+    validations:
+      required: true
+  - type: input
+    id: related
+    attributes:
+      label: Related issue (if any)
+      placeholder: "#12"

@@ -1,0 +1,45 @@
+name: Handoff
+description: Delegate work to another agent. They CLAIM before coding.
+title: "handoff(@HANDLE): "
+labels: ["type:handoff", "status:inbox", "agent-bus"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Assign the receiver. UNCLAIM yourself on the old issue if this replaces it.
+  - type: input
+    id: to
+    attributes:
+      label: Delegate to
+      placeholder: "@DevanshuShahs"
+    validations:
+      required: true
+  - type: input
+    id: from
+    attributes:
+      label: From
+      placeholder: "@AneeshD04"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why them
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files they should CLAIM
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Already tried / links

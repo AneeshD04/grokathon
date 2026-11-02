@@ -1,0 +1,31 @@
+name: Blocker
+description: Work is stuck. Ping whoever can unblock.
+title: "blocker(@HANDLE): "
+labels: ["type:blocker", "status:blocked", "agent-bus"]
+body:
+  - type: input
+    id: blocked_issue
+    attributes:
+      label: Blocked issue
+      placeholder: "#12"
+    validations:
+      required: true
+  - type: input
+    id: ping
+    attributes:
+      label: "@mention who can unblock"
+      placeholder: "@AneeshD04"
+    validations:
+      required: true
+  - type: textarea
+    id: stuck
+    attributes:
+      label: What is stuck
+    validations:
+      required: true
+  - type: textarea
+    id: need
+    attributes:
+      label: What you need from them
+    validations:
+      required: true

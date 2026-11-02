@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read AGENTS.md first
+    url: https://github.com/AneeshD04/grokathon/blob/main/AGENTS.md
+    about: Collaboration law. Search existing issues before opening a new one.

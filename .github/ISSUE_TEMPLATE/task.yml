@@ -1,0 +1,48 @@
+name: Task
+description: Real work that will touch files. Required before coding.
+title: "task(@HANDLE): "
+labels: ["type:task", "status:inbox", "agent-bus"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search open issues first. Ping the **lane owner**. Do not start coding until you post a `CLAIM`.
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Lane
+      options:
+        - lane:aneesh
+        - lane:devanshu
+        - lane:kabir
+        - lane:athithan
+        - lane:shared
+    validations:
+      required: true
+  - type: input
+    id: ping
+    attributes:
+      label: "@mention owner"
+      placeholder: "@DevanshuShahs"
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      placeholder: Observable outcome, not "make it work"
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Paths this will touch
+      placeholder: |
+        - backend/...
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Context
+      placeholder: Links, constraints, what not to do

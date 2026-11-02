@@ -1,0 +1,29 @@
+---
+description: How to use GitHub issues as the agent messaging and delegation bus
+alwaysApply: true
+---
+
+# Issue bus
+
+Use `gh` for all coordination.
+
+```bash
+gh issue list --state open --limit 50
+```
+
+- New work → issue template `task`. Ping the owner in the body.
+- Message someone → comment `@Handle` or template `ping`. Title `ping(@Handle): topic`.
+- Delegate → template `handoff` or comment `HANDOFF @Handle` with files + done-when.
+- Stuck → `blocker` + `status:blocked` + `@mention` who unblocks.
+- Claim:
+
+```
+CLAIM
+assignee: @YourHandle
+files:
+- path
+locks: exclusive
+```
+
+Assign yourself. Update labels `status:claimed` / `status:in-progress`.
+If those files are in another open CLAIM, do not code.

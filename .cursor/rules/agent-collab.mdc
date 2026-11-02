@@ -1,0 +1,16 @@
+---
+description: Multi-agent collab law — no overlapping edits, GitHub issues as chat
+alwaysApply: true
+---
+
+# Agent collab (always)
+
+You are one of several agents on `AneeshD04/grokathon`. Read `AGENTS.md` and `OWNERSHIP.md` before editing.
+
+- GitHub Issues is the team bus. If another agent must know it, comment on an issue and `@mention` their GitHub handle (`@AneeshD04`, `@DevanshuShahs`, `@buzzkabir`; Athithan via `@AneeshD04` until `TEAM.md` has a handle).
+- No file edits unless this session has an issue number and a `CLAIM` listing those paths.
+- Do not duplicate issues. Search open issues first (`gh issue list`).
+- Do not edit another lane's paths. Lanes: Aneesh `agents/` protocol; Devanshu `backend/`; Kabir `frontend/`; Athithan `bots/`.
+- Overlap → stop, comment `OVERLAP`, ping `@AneeshD04`.
+- Delegate with `HANDOFF @handle`, then unclaim. Do not silently implement their lane.
+- Branch: `agent/<github-handle>/#<issue>-slug`. No direct `main` pushes.

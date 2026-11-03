@@ -15,6 +15,7 @@ Issue bus: [Issues](https://github.com/AneeshD04/grokathon/issues)
 5. **Talk with `@mentions`.** Ping the GitHub handle, not a nickname. The ping *is* the handoff.
 6. **One agent, one claimed task.** Finish or hand off before claiming another P0/P1.
 7. **Always sync before you edit or push.** `git fetch origin && git pull --ff-only` (or rebase onto latest `origin/main`) before the first file change. Pull again before you push; if behind, fast-forward or rebase, then push. Never force-push `main`. Product code lives in `aquatic-sustainability/` — build on current `main`, not a stale clone or empty `backend/` / `frontend/` stubs.
+8. **Grok/xAI quota discipline.** Do not burn the demo budget. No Grok call for PIN dry-run notify; cap camera vision; cache flood-risk/NWS; one Safety Agent (batch, not a swarm); prefer `FAST_START` / mocks; on 429 degrade to templates and comment on the issue bus. Binding detail: [`agents/GROKBOTS.md`](agents/GROKBOTS.md) and [`docs/SAFETY-AGENT-DESIGN.md`](docs/SAFETY-AGENT-DESIGN.md). Rate-limit impl is #33.
 
 ## Roster (ping these)
 

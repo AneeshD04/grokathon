@@ -19,7 +19,7 @@ from camwatch.__main__ import main
 from camwatch.alerts import AlertsPublishError, HttpAlertsClient
 from camwatch.config import load_config
 from camwatch.model import MAX_CAMERAS, Camera, check_interval
-from camwatch.sources import frame_from_bytes
+from camwatch.sources import FrameFetchError, fetch_jpeg, frame_from_bytes
 from camwatch.vision import FallbackVision, GrokVision, build_classifier
 from camwatch.worker import WatchState, run_once, select_cameras
 
@@ -452,6 +452,18 @@ def _inbox_camera(directory: Path) -> Camera:
         geofence_id="houston-demo",
         inbox_dir=directory,
     )
+
+
+class StillUrlSafetyTests(unittest.TestCase):
+    def test_rejects_metadata_file_and_credential_urls(self) -> None:
+        with self.assertRaises(FrameFetchError):
+            fetch_jpeg("http://169.254.169.254/latest/meta-data/")
+        with self.assertRaises(FrameFetchError):
+            fetch_jpeg("http://metadata.google.internal/")
+        with self.assertRaises(FrameFetchError):
+            fetch_jpeg("file:///etc/passwd")
+        with self.assertRaises(FrameFetchError):
+            fetch_jpeg("http://user:pass@example.test/cam.jpg")
 
 
 def _start_server():

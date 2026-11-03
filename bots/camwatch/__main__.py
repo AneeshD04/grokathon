@@ -18,6 +18,9 @@ from camwatch.model import MAX_CAMERAS, Camera, check_interval
 from camwatch.vision import build_classifier
 from camwatch.worker import WatchState, run_once
 
+# Preferred Houston watch list. Missing file falls back to the TranStar seed.
+_DEFAULT_HOUSTON = Path(__file__).resolve().parent.parent / "data" / "camwatch_default.json"
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="CamWatch JPEG vision worker")
@@ -25,7 +28,7 @@ def main(argv: list[str] | None = None) -> int:
         "--cameras",
         type=Path,
         default=None,
-        help="Local camera JSON. Default is the TranStar seed (or FL511 with --city pinellas).",
+        help="Local camera JSON. Houston default is camwatch_default.json when that file exists; otherwise the TranStar seed. Pinellas uses the FL511 seed.",
     )
     parser.add_argument(
         "--city",
@@ -81,10 +84,22 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Do not GET /api/watches; sample the local camera file",
     )
+    parser.add_argument(
+        "--card",
+        action="store_true",
+        help="Print one spoken demo card and exit. One still, one vision call, no loop.",
+    )
+    parser.add_argument(
+        "--camera-id",
+        default=None,
+        help="With --card, which camera id to sample. Default is the first camera (Galveston Ferry).",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     log = logging.getLogger("camwatch")
+    if args.card:
+        return _speak_card(args)
     try:
         if args.cameras is not None:
             config = load_config(args.cameras)
@@ -96,9 +111,18 @@ def main(argv: list[str] | None = None) -> int:
         else:
             interval = check_interval(args.interval if args.interval is not None else 20)
             max_cameras = MAX_CAMERAS
-            # Vision still samples at most 8. Pinellas keeps the rest of the seed loaded.
-            city_limit = 64 if args.city == "pinellas" else max_cameras
-            cameras = load_city(args.city, city_limit)
+            default_houston = _DEFAULT_HOUSTON if args.city == "houston" and _DEFAULT_HOUSTON.is_file() else None
+            if default_houston is not None:
+                config = load_config(default_houston)
+                interval = check_interval(
+                    args.interval if args.interval is not None else config.interval_seconds
+                )
+                cameras = list(config.cameras)
+                max_cameras = config.max_cameras
+            else:
+                # Vision still samples at most 8. Pinellas keeps the rest of the seed loaded.
+                city_limit = 64 if args.city == "pinellas" else max_cameras
+                cameras = load_city(args.city, city_limit)
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
         log.error("%s", exc)
         return 2
@@ -143,6 +167,29 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     except KeyboardInterrupt:
         return 0
+
+
+def _speak_card(args) -> int:
+    """One-pass demo. ``--loop`` does not apply here."""
+    from camwatch.card import CardError, redact, run_card
+
+    try:
+        text = run_card(
+            cameras_path=args.cameras,
+            camera_id=args.camera_id,
+            fixture=args.fixture,
+        )
+    except CardError as exc:
+        logging.getLogger("camwatch").error("%s", redact(str(exc)))
+        return 1
+    except Exception as exc:
+        logging.getLogger("camwatch").error(
+            "demo card failed: %s",
+            redact(f"{type(exc).__name__}: {exc}"),
+        )
+        return 1
+    sys.stdout.write(text)
+    return 0
 
 
 def _apply_inbox(cameras: list[Camera], inbox: Path | None) -> list[Camera]:

@@ -1,0 +1,70 @@
+{
+  "cap": 8,
+  "region": "Houston-Galveston",
+  "cameras": [
+    {
+      "id": "180",
+      "name": "Galveston Ferry @ Galveston Ferry Landing",
+      "still_url": "https://www.houstontranstar.org/snapshots/cctv/180.jpg",
+      "lat": 29.326965,
+      "lon": -94.772842,
+      "why": "Galveston ferry landing. Surge and high water close the landing and stack evacuation traffic on the island."
+    },
+    {
+      "id": "177",
+      "name": "Galveston Ferry @ HarborSide (N)",
+      "still_url": "https://www.houstontranstar.org/snapshots/cctv/177.jpg",
+      "lat": 29.3143,
+      "lon": -94.77071,
+      "why": "Low Harborside approach to the Galveston landing. This street floods before the ferry stops running."
+    },
+    {
+      "id": "181",
+      "name": "Bolivar Ferry @ French Town Rd.",
+      "still_url": "https://www.houstontranstar.org/snapshots/cctv/181.jpg",
+      "lat": 29.36452,
+      "lon": -94.7747,
+      "why": "French Town Road into the Bolivar ferry landing. Peninsula roads overwash in storms."
+    },
+    {
+      "id": "164",
+      "name": "45 GULF @ CAUSEWAY (N)",
+      "still_url": "https://www.houstontranstar.org/snapshots/cctv/164.jpg",
+      "lat": 29.30133,
+      "lon": -94.89771,
+      "why": "North approach of the IH-45 Galveston Causeway, the low bay crossing onto the island."
+    },
+    {
+      "id": "1816",
+      "name": "NASA 1 @ SH-146",
+      "still_url": "https://www.houstontranstar.org/snapshots/cctv/1816.jpg",
+      "lat": 29.563873,
+      "lon": -95.025773,
+      "why": "Bayfront arterial in Seabrook where NASA Road 1 meets SH-146 on Galveston Bay, not an IH-45 mainlane."
+    },
+    {
+      "id": "9061",
+      "name": "SH288 @ MacGregor (Brays Bayou)",
+      "still_url": "https://www.houstontranstar.org/snapshots/cctv/9061.jpg",
+      "lat": 29.7127,
+      "lon": -95.3777,
+      "why": "SH-288 at MacGregor, where the road crosses Brays Bayou near the Medical Center."
+    },
+    {
+      "id": "1145",
+      "name": "W Sam Hou/BW8 @ Buffalo Bayou",
+      "still_url": "https://www.houstontranstar.org/snapshots/cctv/1145.jpg",
+      "lat": 29.76302,
+      "lon": -95.55827,
+      "why": "Beltway 8 on the west side where it crosses Buffalo Bayou."
+    },
+    {
+      "id": "8024",
+      "name": "Buffalo Speedway@N Braeswood",
+      "still_url": "https://www.houstontranstar.org/snapshots/cctv/8024.jpg",
+      "lat": 29.696427,
+      "lon": -95.427045,
+      "why": "Street-level camera on low ground beside Brays Bayou, where water stands on the road rather than under a freeway deck."
+    }
+  ]
+}

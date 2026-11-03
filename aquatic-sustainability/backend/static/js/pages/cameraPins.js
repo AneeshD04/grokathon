@@ -1,8 +1,7 @@
 /* Camera pins on the existing Flood/Drought Google map.
-   Click a pin to open a refreshing live still. Houston TranStar's public
-   snapshot URLs currently return HTML, so the pictures are Florida 511
-   cameras inside active NWS flood alerts. Same-origin GET /api/cameras
-   wins when it returns real image URLs. */
+   Houston–Galveston TranStar JPEGs are the demo. GET /api/cameras wins
+   when that route returns rows. The bottom strip still opens a refreshing
+   still if the Google map has not loaded. */
 (function () {
   const FL511 = "https://services.arcgis.com/3wFbqsFPLeKqOlIK/arcgis/rest/services/FL511_Traffic_Cameras/FeatureServer/0/query";
   const NWS = "https://api.weather.gov/alerts/active?area=FL";
@@ -122,20 +121,25 @@
       }).filter(Boolean);
     } catch (e) { return []; }
   }
+  const HOUSTON = [
+    ["180", "Galveston Ferry @ Galveston Ferry Landing", 29.326965, -94.772842],
+    ["177", "Galveston Ferry @ HarborSide (N)", 29.3143, -94.77071],
+    ["181", "Bolivar Ferry @ French Town Rd.", 29.36452, -94.7747],
+    ["164", "45 GULF @ CAUSEWAY (N)", 29.30133, -94.89771],
+    ["1816", "NASA 1 @ SH-146", 29.563873, -95.025773],
+    ["8024", "Buffalo Speedway@N Braeswood", 29.696427, -95.427045]
+  ].map(function (row) {
+    return {
+      id: "transtar-" + row[0], name: row[1], lat: row[2], lon: row[3],
+      still_url: "https://www.houstontranstar.org/snapshots/cctv/" + row[0] + ".jpg",
+      county: "Houston–Galveston", highway: "TranStar", alertEvent: "", coastal: true, source: "transtar"
+    };
+  });
   async function load() {
     if (cache) return cache;
-    const live = await alerts();
-    let cameras = live.length ? await inAlerts(live) : [];
-    if (!cameras.length && live.length) {
-      const b = live[0].box;
-      cameras = await fromApi(b);
-    }
-    if (!cameras.length) {
-      const features = await fl511({ f: "json", where: "COUNTY IN ('Broward','Palm Beach','Miami-Dade','Monroe') AND " + COAST_WHERE, outFields: "ID,DESCRIPT,COUNTY,HIGHWAY,LATITUDE,LONGITUDE,IMAGE", returnGeometry: "false", resultRecordCount: "20" });
-      cameras = features.map(function (f) { return fromAttr(f.attributes || {}, ""); }).filter(Boolean).slice(0, 12);
-    }
-    cache = cameras;
-    return cameras;
+    const api = await fromApi({ minLon: -95.9, minLat: 29.2, maxLon: -94.7, maxLat: 30.1 });
+    cache = api.length ? api : HOUSTON.slice();
+    return cache;
   }
   function stop() { if (timer) clearInterval(timer); timer = null; }
   function open(map, cam) {
@@ -355,7 +359,7 @@
       name: row.name,
       lat: row.lat,
       lon: row.lon,
-      still_url: placeholderStill(row.name),
+      still_url: "https://www.houstontranstar.org/snapshots/cctv/" + row.id + ".jpg",
       source: row.source,
     };
   });

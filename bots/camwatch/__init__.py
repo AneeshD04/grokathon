@@ -1,0 +1,13 @@
+"""CamWatch — camera vision worker for the Safety Agent.
+
+Samples at most 8 cameras, pulls a JPEG every 15–30 seconds, classifies the
+frame (standing water, overtopped road, debris, smoke, all-clear), and
+POSTs ``/api/alerts`` only when the class changes.
+
+The alert JSON matches ``docs/SAFETY-AGENT-DESIGN.md`` and Devanshu's
+``POST /api/alerts`` contract on issue #11. ``XAI_API_KEY`` is optional:
+without it, a filename/sidecar fallback classifies demo frames so a
+flooded-road image dropped in the test inbox still creates an alert.
+"""
+
+__version__ = "0.1.0"

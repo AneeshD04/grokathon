@@ -389,6 +389,13 @@ annotations.innerHTML = '<p class="muted">Annotations will appear here.</p>';
 // Create modal on page load
 createModal();
 
+function exposeFloodMap(instance) {
+  if (!instance) return;
+  window.floodMap = instance;
+  window.__floodMap = instance;
+  window.dispatchEvent(new CustomEvent("flood-map-ready", { detail: { map: instance } }));
+}
+
 function hookFloodMapConstructor() {
   if (!window.google || !google.maps || typeof google.maps.Map !== "function") return false;
   if (google.maps.Map.__oemHooked) return true;
@@ -396,8 +403,7 @@ function hookFloodMapConstructor() {
   function HookedMap(el, opts) {
     const instance = new Original(el, opts);
     if (el && el.id === "map") {
-      window.floodMap = instance;
-      window.dispatchEvent(new CustomEvent("flood-map-ready", { detail: { map: instance } }));
+      exposeFloodMap(instance);
     }
     return instance;
   }
@@ -407,9 +413,21 @@ function hookFloodMapConstructor() {
   return true;
 }
 
+function wrapInitMap() {
+  const prev = window.initMap;
+  if (typeof prev !== "function" || prev.__oemWrapped) return;
+  window.initMap = function () {
+    hookFloodMapConstructor();
+    return prev.apply(this, arguments);
+  };
+  window.initMap.__oemWrapped = true;
+}
+
 (function exposeFloodMapEarly() {
+  wrapInitMap();
   if (hookFloodMapConstructor()) return;
   const timer = setInterval(function () {
+    wrapInitMap();
     if (hookFloodMapConstructor()) clearInterval(timer);
   }, 25);
   setTimeout(function () { clearInterval(timer); }, 20000);

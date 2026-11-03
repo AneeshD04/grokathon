@@ -1,5 +1,6 @@
 (function regionPicker() {
   var DEFAULT_SOURCES = ["model", "camera", "nws"];
+  var GALVESTON_BBOX = [-95.1544, 29.0668, -94.3684, 29.5931];
   var BUS_URL =
     window.ALERT_BUS_URL ||
     localStorage.getItem("ALERT_BUS_URL") ||
@@ -7,8 +8,9 @@
 
   var map = null;
   var overlay = null;
-  var drawClicks = [];
-  var drawMoveListener = null;
+  var pixelProbe = null;
+  var dragStart = null;
+  var dragOriginPx = null;
   var drawing = false;
   var current = {
     county: null,
@@ -37,19 +39,6 @@
       maxLat = Math.max(maxLat, pt.lat);
     });
     return [round4(minLon), round4(minLat), round4(maxLon), round4(maxLat)];
-  }
-
-  function pathFromCorners(a, b) {
-    var minLat = Math.min(a.lat(), b.lat());
-    var maxLat = Math.max(a.lat(), b.lat());
-    var minLon = Math.min(a.lng(), b.lng());
-    var maxLon = Math.max(a.lng(), b.lng());
-    return [
-      { lat: minLat, lng: minLon },
-      { lat: minLat, lng: maxLon },
-      { lat: maxLat, lng: maxLon },
-      { lat: maxLat, lng: minLon },
-    ];
   }
 
   function mockWatch(payload) {
@@ -105,6 +94,7 @@
       minLat: bbox[1],
       maxLon: bbox[2],
       maxLat: bbox[3],
+      bbox: bbox.slice(),
       county: current.county,
       watch: current.watch,
       mocked: current.mocked,
@@ -184,30 +174,121 @@
 
   function stopDrawing() {
     drawing = false;
-    drawClicks = [];
-    if (drawMoveListener && window.google && google.maps) {
-      google.maps.event.removeListener(drawMoveListener);
-      drawMoveListener = null;
-    }
+    dragStart = null;
+    dragOriginPx = null;
     if (map) {
-      map.setOptions({ draggableCursor: null });
+      map.setOptions({ draggable: true, gestureHandling: "auto", draggableCursor: null });
     }
     setCountyButtons(current.county ? current.county.id : null);
   }
 
-  function applyRegion(opts) {
-    var path = opts.path;
-    var bbox = opts.bbox || bboxFromPath(path);
-    var county = opts.county || null;
-    if (!map) {
-      setStatus("Map still loading…");
+  function latLngFromMouse(ev) {
+    if (!map || !pixelProbe) return null;
+    var projection = pixelProbe.getProjection();
+    if (!projection) return null;
+    var rect = map.getDiv().getBoundingClientRect();
+    return projection.fromContainerPixelToLatLng(
+      new google.maps.Point(ev.clientX - rect.left, ev.clientY - rect.top)
+    );
+  }
+
+  function paintDrag(a, b) {
+    var sw = new google.maps.LatLng(Math.min(a.lat(), b.lat()), Math.min(a.lng(), b.lng()));
+    var ne = new google.maps.LatLng(Math.max(a.lat(), b.lat()), Math.max(a.lng(), b.lng()));
+    var bounds = new google.maps.LatLngBounds(sw, ne);
+    if (!overlay || typeof overlay.setBounds !== "function") {
+      clearOverlay();
+      overlay = new google.maps.Rectangle({
+        bounds: bounds,
+        strokeColor: "#60a5fa",
+        strokeOpacity: 0.95,
+        strokeWeight: 2,
+        fillColor: "#60a5fa",
+        fillOpacity: 0.18,
+        map: map,
+        clickable: false,
+      });
+    } else {
+      overlay.setBounds(bounds);
+    }
+    return bounds;
+  }
+
+  function restoreCommitted() {
+    if (!current.bbox) {
+      clearOverlay();
       return;
     }
-    if (bbox[0] >= bbox[2] || bbox[1] >= bbox[3]) {
+    showPath([
+      { lat: current.bbox[1], lng: current.bbox[0] },
+      { lat: current.bbox[1], lng: current.bbox[2] },
+      { lat: current.bbox[3], lng: current.bbox[2] },
+      { lat: current.bbox[3], lng: current.bbox[0] },
+    ]);
+  }
+
+  function onDragDown(ev) {
+    if (!drawing || ev.button !== 0) return;
+    var node = ev.target;
+    if (node && node.closest && node.closest(".gm-bundled-control, .gm-style-mtc, .gmnoprint, .filter-overlay")) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    var start = latLngFromMouse(ev);
+    if (!start) return;
+    dragStart = start;
+    dragOriginPx = { x: ev.clientX, y: ev.clientY };
+
+    function onMove(moveEv) {
+      var cur = latLngFromMouse(moveEv);
+      if (!cur || !dragStart) return;
+      paintDrag(dragStart, cur);
+    }
+
+    function onUp(upEv) {
+      document.removeEventListener("mousemove", onMove, true);
+      document.removeEventListener("mouseup", onUp, true);
+      var origin = dragStart;
+      var originPx = dragOriginPx;
+      var cur = latLngFromMouse(upEv);
+      dragStart = null;
+      dragOriginPx = null;
+      var moved = originPx ? Math.hypot(upEv.clientX - originPx.x, upEv.clientY - originPx.y) : 0;
+      if (!origin || !cur || moved < 8) {
+        restoreCommitted();
+        setStatus(moved < 8 ? "Drag a wider rectangle." : "Map is still loading.");
+        return;
+      }
+      var bounds = paintDrag(origin, cur);
+      var sw = bounds.getSouthWest();
+      var ne = bounds.getNorthEast();
+      var path = [
+        { lat: sw.lat(), lng: sw.lng() },
+        { lat: sw.lat(), lng: ne.lng() },
+        { lat: ne.lat(), lng: ne.lng() },
+        { lat: ne.lat(), lng: sw.lng() },
+      ];
+      stopDrawing();
+      applyRegion({ path: path, bbox: bboxFromPath(path), county: null });
+    }
+
+    document.addEventListener("mousemove", onMove, true);
+    document.addEventListener("mouseup", onUp, true);
+  }
+
+  function applyRegion(opts) {
+    var path = opts.path;
+    var bbox = opts.bbox || (path ? bboxFromPath(path) : null);
+    var county = opts.county || null;
+    if (!bbox || bbox[0] >= bbox[2] || bbox[1] >= bbox[3]) {
       setStatus("Need a box with width and height.");
       return;
     }
-    showPath(path);
+    if (map && path) {
+      showPath(path);
+    } else if (!county) {
+      setStatus("Map still loading…");
+      return;
+    }
     current.county = county;
     current.bbox = bbox;
     setCountyButtons(county ? county.id : null);
@@ -234,26 +315,24 @@
   function watchCounty(id) {
     stopDrawing();
     var county = window.oemCountyById ? window.oemCountyById(id) : null;
+    if (!county && id === "galveston-county") {
+      county = {
+        id: id,
+        name: "Galveston County",
+        bbox: GALVESTON_BBOX.slice(),
+        path: [
+          { lat: GALVESTON_BBOX[1], lng: GALVESTON_BBOX[0] },
+          { lat: GALVESTON_BBOX[1], lng: GALVESTON_BBOX[2] },
+          { lat: GALVESTON_BBOX[3], lng: GALVESTON_BBOX[2] },
+          { lat: GALVESTON_BBOX[3], lng: GALVESTON_BBOX[0] },
+        ],
+      };
+    }
     if (!county) {
       setStatus("Unknown county.");
       return;
     }
     applyRegion({ county: county, path: county.path, bbox: county.bbox.slice() });
-  }
-
-  function onMapClick(e) {
-    if (!drawing) return;
-    drawClicks.push(e.latLng);
-    if (drawClicks.length === 1) {
-      setStatus("Click the opposite corner.");
-      drawMoveListener = map.addListener("mousemove", function (move) {
-        showPath(pathFromCorners(drawClicks[0], move.latLng), "#60a5fa");
-      });
-      return;
-    }
-    var path = pathFromCorners(drawClicks[0], drawClicks[1]);
-    stopDrawing();
-    applyRegion({ path: path, bbox: bboxFromPath(path), county: null });
   }
 
   function startDraw() {
@@ -262,7 +341,6 @@
       return;
     }
     drawing = !drawing;
-    drawClicks = [];
     if (!drawing) {
       stopDrawing();
       setStatus(current.bbox ? "Draw cancelled. Previous watch kept." : "No watch yet.");
@@ -270,8 +348,8 @@
     }
     current.county = null;
     setCountyButtons(null);
-    map.setOptions({ draggableCursor: "crosshair" });
-    setStatus("Click two corners to mark a watch box.");
+    map.setOptions({ draggable: false, gestureHandling: "none", draggableCursor: "crosshair" });
+    setStatus("Drag a rectangle on the map.");
     var drawBtn = $("drawWatchBox");
     if (drawBtn) drawBtn.classList.add("flood-active");
   }
@@ -354,9 +432,17 @@
   function attachMap(nextMap) {
     if (!nextMap || map === nextMap) return;
     map = nextMap;
-    map.addListener("click", onMapClick);
+    window.floodMap = nextMap;
+    window.__floodMap = nextMap;
+    pixelProbe = new google.maps.OverlayView();
+    pixelProbe.onAdd = function () {};
+    pixelProbe.draw = function () {};
+    pixelProbe.setMap(map);
+    map.getDiv().addEventListener("mousedown", onDragDown, true);
     if (current.bbox && current.county) {
       showPath(current.county.path);
+    } else if (current.bbox) {
+      restoreCommitted();
     }
   }
 
@@ -368,6 +454,7 @@
       var instance = new Original(el, opts);
       if (el && el.id === "map") {
         window.floodMap = instance;
+        window.__floodMap = instance;
         window.dispatchEvent(new CustomEvent("flood-map-ready", { detail: { map: instance } }));
       }
       return instance;
@@ -380,8 +467,11 @@
 
   function waitForMap() {
     hookGoogleMap();
-    if (window.floodMap) {
-      attachMap(window.floodMap);
+    var existing = window.floodMap || window.__floodMap;
+    if (existing) {
+      window.floodMap = existing;
+      window.__floodMap = existing;
+      attachMap(existing);
       return;
     }
     setTimeout(waitForMap, 50);

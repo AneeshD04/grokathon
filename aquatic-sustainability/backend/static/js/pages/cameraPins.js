@@ -1,8 +1,7 @@
 /* Camera pins on the existing Flood/Drought Google map.
-   Click a pin to open a refreshing live still. Houston TranStar's public
-   snapshot URLs currently return HTML, so the pictures are Florida 511
-   cameras inside active NWS flood alerts. Same-origin GET /api/cameras
-   wins when it returns real image URLs. */
+   Houston–Galveston TranStar JPEGs are the demo. GET /api/cameras wins
+   when that route returns rows. The bottom strip still opens a refreshing
+   still if the Google map has not loaded. */
 (function () {
   const FL511 = "https://services.arcgis.com/3wFbqsFPLeKqOlIK/arcgis/rest/services/FL511_Traffic_Cameras/FeatureServer/0/query";
   const NWS = "https://api.weather.gov/alerts/active?area=FL";
@@ -122,20 +121,25 @@
       }).filter(Boolean);
     } catch (e) { return []; }
   }
+  const HOUSTON = [
+    ["180", "Galveston Ferry @ Galveston Ferry Landing", 29.326965, -94.772842],
+    ["177", "Galveston Ferry @ HarborSide (N)", 29.3143, -94.77071],
+    ["181", "Bolivar Ferry @ French Town Rd.", 29.36452, -94.7747],
+    ["164", "45 GULF @ CAUSEWAY (N)", 29.30133, -94.89771],
+    ["1816", "NASA 1 @ SH-146", 29.563873, -95.025773],
+    ["8024", "Buffalo Speedway@N Braeswood", 29.696427, -95.427045]
+  ].map(function (row) {
+    return {
+      id: "transtar-" + row[0], name: row[1], lat: row[2], lon: row[3],
+      still_url: "https://www.houstontranstar.org/snapshots/cctv/" + row[0] + ".jpg",
+      county: "Houston–Galveston", highway: "TranStar", alertEvent: "", coastal: true, source: "transtar"
+    };
+  });
   async function load() {
     if (cache) return cache;
-    const live = await alerts();
-    let cameras = live.length ? await inAlerts(live) : [];
-    if (!cameras.length && live.length) {
-      const b = live[0].box;
-      cameras = await fromApi(b);
-    }
-    if (!cameras.length) {
-      const features = await fl511({ f: "json", where: "COUNTY IN ('Broward','Palm Beach','Miami-Dade','Monroe') AND " + COAST_WHERE, outFields: "ID,DESCRIPT,COUNTY,HIGHWAY,LATITUDE,LONGITUDE,IMAGE", returnGeometry: "false", resultRecordCount: "20" });
-      cameras = features.map(function (f) { return fromAttr(f.attributes || {}, ""); }).filter(Boolean).slice(0, 12);
-    }
-    cache = cameras;
-    return cameras;
+    const api = await fromApi({ minLon: -95.9, minLat: 29.2, maxLon: -94.7, maxLat: 30.1 });
+    cache = api.length ? api : HOUSTON.slice();
+    return cache;
   }
   function stop() { if (timer) clearInterval(timer); timer = null; }
   function open(map, cam) {
@@ -165,13 +169,33 @@
     info.open(map);
     google.maps.event.addListenerOnce(info, "closeclick", stop);
   }
+  function viewportBbox(map) {
+    if (!map || typeof map.getBounds !== "function") return null;
+    const b = map.getBounds();
+    if (!b) return null;
+    const sw = b.getSouthWest();
+    const ne = b.getNorthEast();
+    return { minLon: sw.lng(), minLat: sw.lat(), maxLon: ne.lng(), maxLat: ne.lat() };
+  }
+  function inViewport(cam, box) {
+    if (!box) return true;
+    return cam.lon >= box.minLon && cam.lon <= box.maxLon && cam.lat >= box.minLat && cam.lat <= box.maxLat;
+  }
   async function attach(map) {
+    window.floodMap = map;
+    window.__floodMap = map;
     const cameras = await load();
     markers.forEach(function (m) { m.setMap(null); });
     markers = [];
     if (!cameras.length) return;
-    const bounds = new google.maps.LatLngBounds();
-    cameras.forEach(function (cam) {
+    let box = viewportBbox(map);
+    if (!box && google.maps.event) {
+      await new Promise(function (resolve) {
+        google.maps.event.addListenerOnce(map, "idle", resolve);
+      });
+      box = viewportBbox(map);
+    }
+    cameras.filter(function (cam) { return inViewport(cam, box); }).forEach(function (cam) {
       const marker = new google.maps.Marker({
         position: { lat: cam.lat, lng: cam.lon },
         map: map,
@@ -187,23 +211,23 @@
       });
       marker.addListener("click", function () { open(map, cam); });
       markers.push(marker);
-      bounds.extend(marker.getPosition());
     });
-    map.fitBounds(bounds, 48);
   }
   function showStrip(cameras) {
     if (!cameras.length || document.getElementById("camera-demo-strip")) return;
     const bar = document.createElement("div");
     bar.id = "camera-demo-strip";
-    bar.style.cssText = "position:fixed;z-index:50;left:12px;right:12px;bottom:12px;display:flex;gap:8px;overflow:auto;padding:8px;background:rgba(15,23,42,.94);border-radius:12px;border:1px solid rgba(255,255,255,.12);";
-    cameras.slice(0, 6).forEach(function (cam) {
+    const host = document.querySelector(".filter-overlay");
+    if (!host) return;
+    bar.style.cssText = "margin-top:12px;display:flex;gap:8px;overflow:auto;padding-bottom:4px;";
+    cameras.slice(0, 4).forEach(function (cam) {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.style.cssText = "flex:0 0 180px;padding:0;border:0;border-radius:8px;overflow:hidden;background:#0f172a;color:#e7eef6;text-align:left;cursor:pointer;";
+      btn.style.cssText = "flex:0 0 132px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:8px;overflow:hidden;background:#0f172a;color:#e7eef6;text-align:left;cursor:pointer;";
       const img = document.createElement("img");
       img.alt = cam.name;
       img.src = cam.still_url;
-      img.style.cssText = "display:block;width:100%;height:90px;object-fit:cover;background:#111;";
+      img.style.cssText = "display:block;width:100%;height:72px;object-fit:cover;background:#111;";
       const cap = document.createElement("div");
       cap.textContent = cam.name;
       cap.style.cssText = "padding:6px 8px;font:12px/1.3 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
@@ -211,7 +235,7 @@
       btn.addEventListener("click", function () { showFeed(cam); });
       bar.appendChild(btn);
     });
-    document.body.appendChild(bar);
+    host.appendChild(bar);
   }
   function showFeed(cam) {
     const old = document.getElementById("camera-demo-feed");
@@ -244,7 +268,12 @@
     document.body.appendChild(wrap);
   }
   window.SafetyCameraPins = { attach: attach, load: load };
-  if (window.__floodMap) attach(window.__floodMap);
+  var existingMap = window.floodMap || window.__floodMap;
+  if (existingMap) {
+    window.floodMap = existingMap;
+    window.__floodMap = existingMap;
+    attach(existingMap);
+  }
   load().then(showStrip).catch(function () {});
 })();
 
@@ -330,7 +359,7 @@
       name: row.name,
       lat: row.lat,
       lon: row.lon,
-      still_url: placeholderStill(row.name),
+      still_url: "https://www.houstontranstar.org/snapshots/cctv/" + row.id + ".jpg",
       source: row.source,
     };
   });
@@ -499,13 +528,35 @@
     return bboxFromRegionDetail({ bbox: sr.bbox, minLon: sr.bbox.minLon, minLat: sr.bbox.minLat, maxLon: sr.bbox.maxLon, maxLat: sr.bbox.maxLat });
   }
 
+  function bboxFromMap(map) {
+    if (!map || typeof map.getBounds !== "function") return null;
+    var b = map.getBounds();
+    if (!b) return null;
+    var sw = b.getSouthWest();
+    var ne = b.getNorthEast();
+    return [sw.lng(), sw.lat(), ne.lng(), ne.lat()];
+  }
+
+  function loadViewport(map) {
+    var seed = currentSafetyBbox() || bboxFromMap(map);
+    if (seed) {
+      onRegionEvent({ detail: { bbox: seed } });
+      return true;
+    }
+    return false;
+  }
+
   function attach(map) {
     if (!map || typeof google === "undefined" || !google.maps) return;
     mapRef = map;
+    window.floodMap = map;
+    window.__floodMap = map;
     bindRegionListener();
-    var seed = currentSafetyBbox();
-    if (seed) {
-      onRegionEvent({ detail: { bbox: seed } });
+    if (loadViewport(map)) return;
+    if (google.maps.event) {
+      google.maps.event.addListenerOnce(map, "idle", function () {
+        loadViewport(map);
+      });
     }
   }
 

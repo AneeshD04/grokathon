@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AneeshD04/grokathon/blob/main/shared/notify-log.schema.json",
+  "title": "NotifyLog",
+  "description": "Dry-run record of who would have been notified. The approval PIN is never a property of this object. additionalProperties is false so a PIN cannot be stored beside the log.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["timestamp", "mode", "ipaws_stub", "recipients", "drafts"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "ISO-8601 timestamp with a timezone."
+    },
+    "mode": {
+      "const": "dry-run-logged"
+    },
+    "ipaws_stub": {
+      "type": "boolean",
+      "description": "True when the log includes a stub IPAWS/WEA row. Nothing is submitted to IPAWS."
+    },
+    "recipients": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["businesses", "residents", "orgs"],
+      "properties": {
+        "businesses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["place_id"],
+            "properties": {
+              "place_id": { "type": "string", "minLength": 1, "maxLength": 200 }
+            }
+          }
+        },
+        "residents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "maxLength": 64 }
+            }
+          }
+        },
+        "orgs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "type"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+              "type": { "enum": ["county_em", "nws", "uscg", "311"] }
+            }
+          }
+        }
+      }
+    },
+    "drafts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["body", "source"],
+        "properties": {
+          "body": { "type": "string", "minLength": 1, "maxLength": 4000 },
+          "source": { "type": "string", "minLength": 1, "maxLength": 64 }
+        }
+      }
+    }
+  }
+}

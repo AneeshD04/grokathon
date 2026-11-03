@@ -26,6 +26,8 @@
     padding: 16px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     min-width: 280px;
+    max-height: calc(100% - 40px);
+    overflow: auto;
     backdrop-filter: blur(10px);
     transition: background-color 0.3s ease, border-color 0.3s ease;
   }
@@ -123,6 +125,43 @@
     background: var(--drought-color);
     border-color: var(--drought-color);
     color: white;
+  }
+
+  .filter-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .filter-section .toggle-buttons {
+    margin-top: 8px;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .filter-section .filter-title {
+    margin-bottom: 6px;
+  }
+
+  .oem-alert-list {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 8px;
+  }
+
+  .oem-alert-list .modal-info-item {
+    cursor: pointer;
+  }
+
+  .oem-alert-list .modal-info-item:hover,
+  .oem-alert-list .modal-info-item[aria-selected="true"] {
+    border-color: var(--primary);
+  }
+
+  .notify-pin-error {
+    color: #ef4444;
+    font-size: 13px;
+    margin-top: 8px;
   }
 
   .modal-overlay {
@@ -424,6 +463,16 @@
     <button class="toggle-btn flood-active" id="toggleFlood">💧 Flood</button>
     <button class="toggle-btn drought-active" id="toggleDrought">🌵 Drought</button>
   </div>
+
+  <div class="filter-section" id="oem-alerts">
+    <div class="filter-title">Live alerts</div>
+    <p class="muted" id="oemAlertStatus">Waiting for alert bus…</p>
+    <div id="oemAlertList" class="oem-alert-list"></div>
+    <div class="toggle-buttons">
+      <button type="button" class="toggle-btn" id="oemInjectAlert">Inject fake alert</button>
+      <button type="button" class="toggle-btn flood-active" id="oemSendAlerts">Send alerts</button>
+    </div>
+  </div>
 </div>
 
 <div id="map"></div>
@@ -437,6 +486,16 @@
       <button class="modal-close" aria-label="Close modal">&times;</button>
     </div>
     <div class="modal-body" id="modalContent"></div>
+  </div>
+</div>
+
+<div id="notifyModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Confirm notify</h2>
+      <button class="modal-close" type="button" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body" id="notifyModalBody"></div>
   </div>
 </div>
 
@@ -1274,12 +1333,41 @@
 
       droughtPolygons.push(polygon);
     });
+
+    window.__floodMap = map;
+    window.floodMap = map;
+    window.dispatchEvent(new CustomEvent("flood-map-ready", { detail: { map: map } }));
+    if (window.SafetyCameraPins) SafetyCameraPins.attach(map);
+    if (window.SafetyBusinessPins) SafetyBusinessPins.attach(map);
   }
 
 </script>
 
 <script src="/static/js/components/navbar.js" defer></script>
 <script src="/static/js/main.js" defer></script>
+<script src="/static/js/pages/cameraPins.js"></script>
+<script src="/static/js/pages/businessPins.js"></script>
+<script src="/static/js/pages/roster.js"></script>
 <script src="/static/js/pages/floodDrought.js" defer></script>
+<script src="/static/js/pages/safety-alerts.js" defer></script>
+<script src="/static/js/pages/safety-notify.js" defer></script>
+<script>
+(function () {
+  var tries = 0;
+  var timer = setInterval(function () {
+    tries += 1;
+    var host = document.getElementById("oem-watch");
+    if (host && window.SafetyRoster && !host.querySelector("[data-safety-roster-root]")) {
+      var mount = document.createElement("div");
+      mount.setAttribute("data-safety-roster-root", "1");
+      host.appendChild(mount);
+      window.SafetyRoster.attach(mount);
+    }
+    if ((host && host.querySelector("[data-safety-roster-root]")) || tries > 40) {
+      clearInterval(timer);
+    }
+  }, 200);
+})();
+</script>
 </body>
 </html>

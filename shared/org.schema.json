@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AneeshD04/grokathon/blob/main/shared/org.schema.json",
+  "title": "Org",
+  "description": "Display-only notify roster contact. email and phone are null when the sender must not dial or mail the org.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "type", "county", "email", "phone"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "type": {
+      "enum": ["county_em", "nws", "uscg", "311"]
+    },
+    "county": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "email": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1, "maxLength": 200 }
+      ]
+    },
+    "phone": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1, "maxLength": 40 }
+      ]
+    }
+  }
+}

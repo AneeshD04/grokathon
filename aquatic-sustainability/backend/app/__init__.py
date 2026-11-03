@@ -34,6 +34,20 @@ def create_app():
     # registering API routes
     from .routes import bp as api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
+    from .modelwatch import bp as modelwatch_bp, start_modelwatch
+    app.register_blueprint(modelwatch_bp, url_prefix="/api")
+    start_modelwatch(app)
+    from .safety_chat import bp as safety_chat_bp
+    app.register_blueprint(safety_chat_bp, url_prefix="/api")
+
+    # Safety Agent APIs (#11 alert bus, #13 PIN notify, Places nearby).
+    # Additive register only — do not replace DualCNN-LSTM routes.
+    from .alertbus import bp as alertbus_bp
+    from .notify import bp as notify_bp
+    from .places import bp as places_bp
+    app.register_blueprint(alertbus_bp, url_prefix="/api")
+    app.register_blueprint(notify_bp, url_prefix="/api")
+    app.register_blueprint(places_bp, url_prefix="/api")
 
     # Homepage - landing page
     @app.route("/")

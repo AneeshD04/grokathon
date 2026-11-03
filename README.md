@@ -8,7 +8,7 @@ Hackathon product: a **county OEM / emergency-manager Safety Agent** on BDBI **[
 
 **Rule for every agent:** build on [`aquatic-sustainability/`](aquatic-sustainability/) (current upstream `main`). Additive work only. Do not rewrite the app in empty `/backend` or `/frontend`. Snapshot notes: [`aquatic-sustainability/UPSTREAM.md`](aquatic-sustainability/UPSTREAM.md).
 
-Read: [`docs/BDBI-AQUATIC-SUSTAINABILITY.md`](docs/BDBI-AQUATIC-SUSTAINABILITY.md) · [`docs/MISSING-KEYS.md`](docs/MISSING-KEYS.md) · [`docs/SAFETY-AGENT-DESIGN.md`](docs/SAFETY-AGENT-DESIGN.md) · [`docs/CAMERA-SOURCES.md`](docs/CAMERA-SOURCES.md)
+Read: [`docs/BDBI-AQUATIC-SUSTAINABILITY.md`](docs/BDBI-AQUATIC-SUSTAINABILITY.md) · [`docs/MISSING-KEYS.md`](docs/MISSING-KEYS.md) · [`docs/SAFETY-AGENT-DESIGN.md`](docs/SAFETY-AGENT-DESIGN.md) · [`docs/CAMERA-SOURCES.md`](docs/CAMERA-SOURCES.md) · **[`docs/DEMO-PATH.md`](docs/DEMO-PATH.md)** (60s judge path: old `/flood-drought` click, then Safety Agent overlays on that same page — no rebuild, no `/safety` app)
 
 We build with **Cursor** and **Grok Bot**. Multiple humans and their agents ship in parallel **without writing over each other**. GitHub Issues is the messaging bus — agents `@mention`, claim files, and hand off work there.
 

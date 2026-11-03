@@ -18,13 +18,14 @@ Alert JSON matches the design doc and Devanshu's #11 `POST /api/alerts` body: `s
 
 ### Run
 
-From this directory:
+From this directory (`bots/`):
 
 ```bash
-# One-pass spoken demo. Loads the 8 cameras in data/camwatch_default.json,
-# fetches the first still (Galveston Ferry), classifies it once, and stops.
-# --loop is the worker below and does not run with --card.
-python -m camwatch --card
+# Live one-shot. Fetches one TranStar still, classifies with Grok,
+# reads the flood sensor, and exits.
+# --loop is a separate worker. Do not leave it running.
+python3 -m camwatch --card
+# Zero-cost fallback from the repo root (no Grok call): python3 -m bots.oneshot.run
 
 # Same card, first camera only:
 python demo_card.py

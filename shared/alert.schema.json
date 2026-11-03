@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AneeshD04/grokathon/blob/main/shared/alert.schema.json",
+  "title": "Alert",
+  "description": "Stored Safety Agent alert. POST /api/alerts omits id and may omit ts; the bus mints both. evidence.raw stays open so current posts still match. Model metadata may also appear as the optional evidence fields below.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "ts",
+    "source",
+    "severity",
+    "lat",
+    "lon",
+    "geofence_id",
+    "title",
+    "summary",
+    "evidence",
+    "dedupe_key"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "ts": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "ISO-8601 timestamp with a timezone."
+    },
+    "source": {
+      "enum": ["camera", "nws", "usgs", "x", "model", "news", "places", "transtar"]
+    },
+    "severity": {
+      "enum": ["info", "watch", "warning", "critical"]
+    },
+    "lat": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90
+    },
+    "lon": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180
+    },
+    "geofence_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "thumb_url": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "string",
+              "maxLength": 2048,
+              "pattern": "^https?://[^\\s@]+$",
+              "description": "http(s) URL with no userinfo."
+            }
+          ]
+        },
+        "raw": {
+          "type": "object",
+          "maxProperties": 32,
+          "description": "Producer-specific payload. TranStar roadway warnings currently arrive as source usgs with raw.feed transtar-flood-warning."
+        },
+        "model": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "endpoint": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "max_prob": { "type": "number" },
+        "threshold": { "type": "number" },
+        "inputs": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "latency": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "synthetic": { "type": "boolean" },
+        "trained": { "type": "boolean" }
+      }
+    },
+    "dedupe_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "impacted_businesses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["place_id", "name", "types", "lat", "lon"],
+        "properties": {
+          "place_id": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "types": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 40 }
+          },
+          "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+          "lon": { "type": "number", "minimum": -180, "maximum": 180 }
+        }
+      }
+    }
+  }
+}

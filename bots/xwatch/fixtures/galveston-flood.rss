@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:georss="http://www.georss.org/georss">
+  <channel>
+    <title>XWatch fixture RSS</title>
+    <item>
+      <title>Storm surge flooding Galveston seawall</title>
+      <description>High water over Seawall Blvd. Road closed near the Strand.</description>
+      <link>https://example.test/rss/galveston-flood</link>
+      <guid isPermaLink="false">rss-galveston-flood-1</guid>
+      <pubDate>Mon, 02 Nov 2026 20:00:00 GMT</pubDate>
+      <georss:point>29.3013 -94.7977</georss:point>
+    </item>
+    <item>
+      <title>County fair ribbon winners</title>
+      <description>Livestock show results from last weekend.</description>
+      <guid isPermaLink="false">rss-skip-fair</guid>
+      <pubDate>Mon, 02 Nov 2026 19:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

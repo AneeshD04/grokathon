@@ -7,7 +7,7 @@ Update this file in a PR when handles change. `AGENTS.md` must stay in sync.
 | Aneesh Dantuluri | Conductor, product, protocol/docs | [@AneeshD04](https://github.com/AneeshD04) | `agent-aneesh` |
 | Devanshu Shah | Flask API `aquatic-sustainability/backend/` | [@DevanshuShahs](https://github.com/DevanshuShahs) | `agent-devanshu` |
 | Kabir | UI `aquatic-sustainability/backend/static/` | [@buzzkabir](https://github.com/buzzkabir) | `agent-kabir` |
-| Athithan | `bots/` watchers that plug into that app | **not a collaborator yet** — invite + paste handle here | `agent-athithan` |
+| Athithan | `bots/` watchers that plug into that app | [@athithan-elamaran1](https://github.com/athithan-elamaran1) | `agent-athithan` |
 
 Repo: https://github.com/AneeshD04/grokathon (private)
 

@@ -21,6 +21,14 @@ Alert JSON matches the design doc and Devanshu's #11 `POST /api/alerts` body: `s
 From this directory:
 
 ```bash
+# One-pass spoken demo. Loads the 8 cameras in data/camwatch_default.json,
+# fetches the first still (Galveston Ferry), classifies it once, and stops.
+# --loop is the worker below and does not run with --card.
+python -m camwatch --card
+
+# Same card, first camera only:
+python demo_card.py
+
 # Demo inject. --fixture does not call xAI:
 mkdir -p camwatch/fixtures/inbox
 cp camwatch/fixtures/flooded-road.jpg camwatch/fixtures/inbox/
@@ -50,7 +58,7 @@ Class memory is in-process: the same JPEG is not posted twice until CamWatch res
 ### Proof
 
 ```bash
-python -m unittest tests.test_flooded_road -v
+python -m unittest tests.test_flooded_road tests.test_demo_card -q
 ```
 
-That test drops `camwatch/fixtures/flooded-road.jpg` into a folder and asserts the alert.
+`test_flooded_road` drops `camwatch/fixtures/flooded-road.jpg` into a folder and asserts the alert. `test_demo_card` checks the one-pass card with a fake still and a fake vision call, so it does not hit the network.

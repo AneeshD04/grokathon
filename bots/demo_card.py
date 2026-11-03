@@ -1,4 +1,8 @@
-"""One spoken sentence for the flood demo. Stdlib only; no network and no .env."""
+"""Spoken lines for the flood demo.
+
+``demo_line`` and ``sensor_line`` are stdlib only: no network and no .env.
+``python demo_card.py`` and ``python -m camwatch --card`` run one live pass.
+"""
 
 from __future__ import annotations
 
@@ -20,6 +24,34 @@ _CLEAR = {
     "all clear",
     "clear",
 }
+
+
+def sensor_line(warning: dict | None) -> str:
+    """One factual line for the gauge the spoken sentence is about."""
+    if not isinstance(warning, dict):
+        return "No flood sensor."
+    _above, name = _above_bank(warning)
+    water = _number(warning, "water_level", "WaterLevel", "StreamElevationLatestValue")
+    bank = _number(warning, "bank_height", "BankHeight", "TopOfBank")
+    if water is None or bank is None:
+        return f"{_sensor_name(name)} has no bank reading."
+    if water > bank:
+        relation = "is above its bank"
+    elif water < bank:
+        relation = "is below its bank"
+    else:
+        relation = "is at its bank"
+    return f"{_sensor_name(name)} {relation}. Water is {_plain(water)}. The bank is {_plain(bank)}."
+
+
+def _sensor_name(name: str) -> str:
+    if name.lower() in {"sensor", "the sensor"}:
+        return "The sensor"
+    return f"Sensor {name}"
+
+
+def _plain(value: float) -> str:
+    return f"{value:.3f}".rstrip("0").rstrip(".")
 
 
 def demo_line(vision_class: str, warning: dict | None) -> str:
@@ -110,11 +142,21 @@ def load_warning(path: Path | None = None) -> dict | None:
     return first
 
 
-def main() -> None:
-    warning = load_warning()
-    print(demo_line("impassable", warning))
-    print(demo_line("dry", warning))
+def main() -> int:
+    """One still, one vision call, then the spoken card. Same path as ``python -m camwatch --card``."""
+    import sys
+
+    from camwatch.card import CardError, run_card
+
+    try:
+        sys.stdout.write(run_card())
+    except CardError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    sys.exit(main())

@@ -84,10 +84,22 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Do not GET /api/watches; sample the local camera file",
     )
+    parser.add_argument(
+        "--card",
+        action="store_true",
+        help="Print one spoken demo card and exit. One still, one vision call, no loop.",
+    )
+    parser.add_argument(
+        "--camera-id",
+        default=None,
+        help="With --card, which camera id to sample. Default is the first camera (Galveston Ferry).",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     log = logging.getLogger("camwatch")
+    if args.card:
+        return _speak_card(args)
     try:
         if args.cameras is not None:
             config = load_config(args.cameras)
@@ -155,6 +167,29 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     except KeyboardInterrupt:
         return 0
+
+
+def _speak_card(args) -> int:
+    """One-pass demo. ``--loop`` does not apply here."""
+    from camwatch.card import CardError, redact, run_card
+
+    try:
+        text = run_card(
+            cameras_path=args.cameras,
+            camera_id=args.camera_id,
+            fixture=args.fixture,
+        )
+    except CardError as exc:
+        logging.getLogger("camwatch").error("%s", redact(str(exc)))
+        return 1
+    except Exception as exc:
+        logging.getLogger("camwatch").error(
+            "demo card failed: %s",
+            redact(f"{type(exc).__name__}: {exc}"),
+        )
+        return 1
+    sys.stdout.write(text)
+    return 0
 
 
 def _apply_inbox(cameras: list[Camera], inbox: Path | None) -> list[Camera]:

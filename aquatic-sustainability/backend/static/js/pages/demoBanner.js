@@ -10,12 +10,14 @@
     bar.setAttribute("role", "status");
     bar.textContent = TEXT;
     bar.style.cssText =
-      "position:fixed;top:0;left:0;right:0;z-index:10000;" +
+      // In flow (body is a flex column on this page) so it pushes the sticky
+      // header and map down instead of painting over the brand and nav.
+      "position:relative;flex:0 0 auto;width:100%;z-index:50;" +
       "margin:0;padding:6px 12px;" +
       "font:12px/1.35 system-ui,-apple-system,sans-serif;" +
       "text-align:center;color:#fef3c7;" +
       "background:#78350f;border-bottom:1px solid rgba(255,255,255,.15);" +
-      "box-sizing:border-box;pointer-events:none;";
+      "box-sizing:border-box;";
     document.body.prepend(bar);
   }
 

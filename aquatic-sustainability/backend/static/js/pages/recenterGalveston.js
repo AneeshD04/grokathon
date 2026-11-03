@@ -40,7 +40,7 @@
     var wrap = document.createElement("div");
     wrap.id = "recenter-galveston-fixed";
     wrap.style.cssText =
-      "position:fixed;z-index:55;right:12px;bottom:72px;padding:4px;background:rgba(15,23,42,.92);border-radius:8px;border:1px solid rgba(255,255,255,.12);";
+      "position:fixed;z-index:55;left:12px;bottom:72px;padding:4px;background:rgba(15,23,42,.92);border-radius:8px;border:1px solid rgba(255,255,255,.12);";
     wrap.appendChild(createButton());
     document.body.appendChild(wrap);
     mounted = true;

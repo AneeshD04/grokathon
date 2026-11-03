@@ -138,9 +138,23 @@
     return cameras;
   }
   function stop() { if (timer) clearInterval(timer); timer = null; }
+  function preserveMapView(map) {
+    var sr = window.SafetyRegion;
+    if (sr) {
+      var b = sr.bbox;
+      if (!b && typeof sr.getBbox === "function") b = sr.getBbox();
+      if (b && [b.minLon, b.minLat, b.maxLon, b.maxLat].every(function (n) { return Number.isFinite(Number(n)); })) {
+        return true;
+      }
+    }
+    var center = map && map.getCenter && map.getCenter();
+    if (!center) return false;
+    return Math.abs(center.lat() - 8) >= 1 || Math.abs(center.lng() - 110) >= 1;
+  }
   function open(map, cam) {
     stop();
     if (!info) info = new google.maps.InfoWindow();
+    if (info.setOptions) info.setOptions({ disableAutoPan: preserveMapView(map) });
     const root = document.createElement("div");
     root.style.cssText = "width:280px;font:13px/1.35 system-ui,sans-serif;color:#0f172a;";
     const title = document.createElement("strong");
@@ -189,9 +203,7 @@
       markers.push(marker);
       bounds.extend(marker.getPosition());
     });
-    const center = map.getCenter && map.getCenter();
-    const stillDefault = !center || (Math.abs(center.lat() - 8) < 1 && Math.abs(center.lng() - 110) < 1);
-    if (stillDefault) map.fitBounds(bounds, 48);
+    if (!preserveMapView(map)) map.fitBounds(bounds, 48);
   }
   function showStrip(cameras) {
     if (!cameras.length || document.getElementById("camera-demo-strip")) return;
@@ -451,6 +463,7 @@
       });
       marker.addListener("click", function () {
         if (openInfoWindow) openInfoWindow.close();
+        if (info.setOptions) info.setOptions({ disableAutoPan: preserveMapView(map) });
         info.open({ map: map, anchor: marker });
         openInfoWindow = info;
       });
@@ -500,6 +513,20 @@
     var sr = window.SafetyRegion;
     if (!sr || !sr.bbox) return null;
     return bboxFromRegionDetail({ bbox: sr.bbox, minLon: sr.bbox.minLon, minLat: sr.bbox.minLat, maxLon: sr.bbox.maxLon, maxLat: sr.bbox.maxLat });
+  }
+
+  function preserveMapView(map) {
+    var sr = window.SafetyRegion;
+    if (sr) {
+      var b = sr.bbox;
+      if (!b && typeof sr.getBbox === "function") b = sr.getBbox();
+      if (b && [b.minLon, b.minLat, b.maxLon, b.maxLat].every(function (n) { return Number.isFinite(Number(n)); })) {
+        return true;
+      }
+    }
+    var center = map && map.getCenter && map.getCenter();
+    if (!center) return false;
+    return Math.abs(center.lat() - 8) >= 1 || Math.abs(center.lng() - 110) >= 1;
   }
 
   function attach(map) {

@@ -11,12 +11,12 @@ import time
 from pathlib import Path
 
 from camwatch.alerts import AlertsPublishError, FileAlertsClient, HttpAlertsClient, fetch_watches
+from camwatch.catalog import load_city
 from camwatch.config import load_config
-from camwatch.model import Camera, check_interval
+from camwatch.flood import publish_new_flood_alerts
+from camwatch.model import MAX_CAMERAS, Camera, check_interval
 from camwatch.vision import build_classifier
 from camwatch.worker import WatchState, run_once
-
-_PACKAGE_ROOT = Path(__file__).resolve().parent
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,8 +24,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--cameras",
         type=Path,
-        default=_PACKAGE_ROOT / "cameras.example.json",
-        help="Local camera JSON (id, name, lat, lon, still_url or inbox_dir)",
+        default=None,
+        help="Local camera JSON. Default is the TranStar seed (or FL511 with --city pinellas).",
+    )
+    parser.add_argument(
+        "--city",
+        choices=("houston", "pinellas"),
+        default="houston",
+        help="houston = TranStar stills (cap 8). pinellas = FL511 backup city.",
+    )
+    parser.add_argument(
+        "--fixture",
+        action="store_true",
+        help="Classify from the filename or sidecar. Do not call xAI.",
     )
     parser.add_argument(
         "--once",
@@ -73,16 +84,26 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    log = logging.getLogger("camwatch")
     try:
-        config = load_config(args.cameras)
-        interval = check_interval(
-            args.interval if args.interval is not None else config.interval_seconds
-        )
+        if args.cameras is not None:
+            config = load_config(args.cameras)
+            interval = check_interval(
+                args.interval if args.interval is not None else config.interval_seconds
+            )
+            cameras = list(config.cameras)
+            max_cameras = config.max_cameras
+        else:
+            interval = check_interval(args.interval if args.interval is not None else 20)
+            max_cameras = MAX_CAMERAS
+            # Vision still samples at most 8. Pinellas keeps the rest of the seed loaded.
+            city_limit = 64 if args.city == "pinellas" else max_cameras
+            cameras = load_city(args.city, city_limit)
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
-        logging.getLogger("camwatch").error("%s", exc)
+        log.error("%s", exc)
         return 2
-    cameras = _apply_inbox(list(config.cameras), args.inbox)
-    classifier = build_classifier()
+    cameras = _apply_inbox(cameras, args.inbox)
+    classifier = build_classifier(fixture=args.fixture)
     bus_token = os.environ.get("ALERT_BUS_TOKEN", "").strip()
     publisher = (
         FileAlertsClient(args.out)
@@ -101,9 +122,11 @@ def main(argv: list[str] | None = None) -> int:
             publisher=publisher,
             state=state,
             watches=watches,
-            max_cameras=config.max_cameras,
+            max_cameras=max_cameras,
         )
-        logging.getLogger("camwatch").info("published %s alert(s)", len(alerts))
+        if args.cameras is None and args.city == "houston":
+            alerts.extend(publish_new_flood_alerts(publisher, state))
+        log.info("published %s alert(s)", len(alerts))
         return len(alerts)
 
     try:

@@ -5,22 +5,24 @@ Run from bots/: ``python -m unittest tests.test_flooded_road -v``
 
 from __future__ import annotations
 
-import io
 import json
 import shutil
 import tempfile
 import threading
 import unittest
 import urllib.error
+from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from camwatch.__main__ import main
 from camwatch.alerts import AlertsPublishError, HttpAlertsClient
 from camwatch.config import load_config
+from camwatch.catalog import load_city
+from camwatch.flood import build_flood_alerts, publish_new_flood_alerts
 from camwatch.model import MAX_CAMERAS, Camera, check_interval
 from camwatch.sources import FrameFetchError, fetch_jpeg, frame_from_bytes
-from camwatch.vision import FallbackVision, GrokVision, build_classifier
+from camwatch.vision import FallbackVision, LiveGrokVision, VisionError, build_classifier, result_from_grok_label
 from camwatch.worker import WatchState, run_once, select_cameras
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -124,6 +126,7 @@ class FloodedRoadTests(unittest.TestCase):
                     "--cameras",
                     str(EXAMPLE),
                     "--ignore-watches",
+                    "--fixture",
                 ]
             )
             self.assertEqual(code, 0)
@@ -229,64 +232,39 @@ class FloodedRoadTests(unittest.TestCase):
         self.assertEqual(loaded.interval_seconds, 20)
         self.assertEqual(loaded.cameras[0].id, "buffalo-1")
 
-    def test_grok_request_shape_and_offline_fallback(self) -> None:
-        frame = frame_from_bytes(FLOODED.read_bytes(), filename="flooded-road.jpg")
-        captured: dict = {}
+    def test_grok_label_map_and_fixture_fallback_without_network(self) -> None:
+        frame = frame_from_bytes(FLOODED.read_bytes(), filename="flooded-road.jpg", camera_name="Buffalo Speedway")
+        self.assertEqual(result_from_grok_label("dry").vision_class, "all_clear")
+        self.assertEqual(result_from_grok_label("wet").vision_class, "standing_water")
+        self.assertEqual(result_from_grok_label("standing water").vision_class, "standing_water")
+        self.assertEqual(result_from_grok_label("impassable").vision_class, "overtopped_road")
+        self.assertEqual(result_from_grok_label("people in water").vision_class, "overtopped_road")
+        self.assertIn("people in water", result_from_grok_label("people in water").summary.lower())
 
-        class _Response:
-            def read(self) -> bytes:
-                return json.dumps(
-                    {
-                        "choices": [
-                            {
-                                "message": {
-                                    "content": (
-                                        '{"class":"overtopped_road","confidence":0.91,'
-                                        '"summary":"Vision: water covering two lanes.","uncertain":false}'
-                                    )
-                                }
-                            }
-                        ]
-                    }
-                ).encode("utf-8")
+        calls = {"n": 0}
 
-            def __enter__(self):
-                return self
+        def classify(jpeg, name):
+            calls["n"] += 1
+            self.assertEqual(name, "Buffalo Speedway")
+            self.assertTrue(jpeg.startswith(b"\xff\xd8"))
+            return "impassable"
 
-            def __exit__(self, *exc) -> bool:
-                return False
-
-        def opener(request, timeout=0):
-            captured["url"] = request.full_url
-            captured["auth"] = request.get_header("Authorization")
-            captured["body"] = json.loads(request.data.decode("utf-8"))
-            return _Response()
-
-        result = GrokVision(api_key="test-key-not-real", opener=opener, fallback=FallbackVision()).classify(
-            frame
-        )
+        live = LiveGrokVision(fallback=FallbackVision(), classify_frame=classify, rpm=None)
+        result = live.classify(frame)
         self.assertEqual(result.backend, "grok")
         self.assertEqual(result.vision_class, "overtopped_road")
-        self.assertEqual(result.summary, "Vision: water covering two lanes.")
-        self.assertEqual(captured["url"], "https://api.x.ai/v1/chat/completions")
-        self.assertEqual(captured["auth"], "Bearer test-key-not-real")
-        self.assertEqual(captured["body"]["model"], "grok-4.7")
-        image = captured["body"]["messages"][1]["content"][0]["image_url"]
-        self.assertTrue(image["url"].startswith("data:image/jpeg;base64,"))
-        self.assertEqual(image["detail"], "low")
-        self.assertNotIn("test-key-not-real", json.dumps(captured["body"]))
+        self.assertEqual(calls["n"], 1)
 
-        def offline(request, timeout=0):
-            raise urllib.error.URLError("offline")
+        def broken(jpeg, name):
+            from grok_client import GrokClientError
 
-        fallen = GrokVision(
-            api_key="test-key-not-real",
-            opener=offline,
-            fallback=FallbackVision(),
-        ).classify(frame)
+            raise GrokClientError("vision failed")
+
+        fallen = LiveGrokVision(fallback=FallbackVision(), classify_frame=broken, rpm=None).classify(frame)
         self.assertEqual(fallen.backend, "fallback")
         self.assertEqual(fallen.vision_class, "overtopped_road")
         self.assertIsInstance(build_classifier({}), FallbackVision)
+        self.assertIsInstance(build_classifier(fixture=True), FallbackVision)
 
     def test_one_new_frame_per_pass_round_robin(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -320,7 +298,7 @@ class FloodedRoadTests(unittest.TestCase):
                 ],
             )
 
-    def test_rpm_and_http_429_use_fallback_without_a_second_call(self) -> None:
+    def test_rpm_skips_without_a_second_grok_call(self) -> None:
         frame = frame_from_bytes(FLOODED.read_bytes(), filename="flooded-road.jpg")
         self.assertIsInstance(
             build_classifier({"XAI_API_KEY": "test-key-not-real", "GROK_MAX_RPM": "0"}),
@@ -328,46 +306,48 @@ class FloodedRoadTests(unittest.TestCase):
         )
         calls = {"n": 0}
 
-        class _Response:
-            def read(self) -> bytes:
-                return json.dumps(
-                    {
-                        "choices": [
-                            {
-                                "message": {
-                                    "content": '{"class":"smoke","confidence":0.8,"summary":"Vision: smoke visible.","uncertain":false}'
-                                }
-                            }
-                        ]
-                    }
-                ).encode("utf-8")
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *exc) -> bool:
-                return False
-
-        def opener(request, timeout=0):
+        def classify(jpeg, name):
             calls["n"] += 1
-            return _Response()
+            return "standing water"
 
-        vision = GrokVision(api_key="test-key-not-real", opener=opener, fallback=FallbackVision(), rpm=1)
-        self.assertEqual(vision.classify(frame).backend, "grok")
-        self.assertEqual(vision.classify(frame).backend, "fallback")
+        vision = LiveGrokVision(fallback=FallbackVision(), classify_frame=classify, rpm=1)
+        self.assertEqual(vision.classify(frame).vision_class, "standing_water")
+        with self.assertRaises(VisionError):
+            vision.classify(frame)
         self.assertEqual(calls["n"], 1)
 
-        def quota(request, timeout=0):
-            raise urllib.error.HTTPError(request.full_url, 429, "quota", hdrs=None, fp=io.BytesIO(b""))
+    def test_transtar_default_and_fl511_backup_are_on_disk(self) -> None:
+        houston = load_city("houston")
+        pinellas = load_city("pinellas", limit=64)
+        self.assertEqual(len(houston), 8)
+        self.assertGreater(len(pinellas), 8)
+        self.assertTrue(houston[0].id.startswith("transtar-"))
+        self.assertTrue(houston[0].still_url.startswith("https://"))
+        self.assertEqual(pinellas[0].geofence_id, "pinellas-demo")
+        self.assertTrue(pinellas[0].still_url.startswith("https://"))
+        self.assertTrue(pinellas[0].id.startswith("fl511-"))
 
-        fallen = GrokVision(
-            api_key="test-key-not-real",
-            opener=quota,
-            fallback=FallbackVision(),
-            rpm=None,
-        ).classify(frame)
-        self.assertEqual(fallen.backend, "fallback")
-        self.assertEqual(fallen.vision_class, "overtopped_road")
+    def test_saved_flood_warning_posts_once(self) -> None:
+        with patch("feeds.flood_warnings._fetch_json", side_effect=urllib.error.URLError("offline")):
+            from feeds.flood_warnings import load_warnings
+
+            points = load_warnings()
+        alerts = build_flood_alerts(points)
+        self.assertEqual(len(alerts), 1)
+        alert = alerts[0]
+        self.assertEqual(alert["evidence"]["raw"]["sensor_id"], "145")
+        self.assertEqual(alert["evidence"]["raw"]["sensor_name"], "JF13-3")
+        self.assertEqual(alert["evidence"]["raw"]["feed"], "transtar-flood-warning")
+        self.assertGreater(alert["evidence"]["raw"]["water_level"], alert["evidence"]["raw"]["bank_height"])
+        self.assertEqual(alert["severity"], "critical")
+        self.assertEqual(alert["dedupe_key"], "transtar-flood:145:stream_elevation_alert")
+        sink = _Memory()
+        state = WatchState()
+        first = publish_new_flood_alerts(sink, state, points)
+        second = publish_new_flood_alerts(sink, state, points)
+        self.assertEqual(len(first), 1)
+        self.assertEqual(second, [])
+        self.assertEqual(len(sink.alerts), 1)
 
     def test_bus_token_header_and_retry_skips_vision(self) -> None:
         captured: dict[str, str | None] = {}

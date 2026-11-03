@@ -101,6 +101,7 @@ def frame_from_bytes(
     filename: str | None,
     path: Path | None = None,
     thumb_url: str | None = None,
+    camera_name: str | None = None,
 ) -> Frame:
     if not data.startswith(b"\xff\xd8"):
         raise FrameFetchError("not a JPEG")
@@ -112,6 +113,7 @@ def frame_from_bytes(
         filename=filename,
         path=path,
         thumb_url=thumb_url,
+        camera_name=camera_name,
     )
 
 

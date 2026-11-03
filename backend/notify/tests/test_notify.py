@@ -17,6 +17,7 @@ GALVESTON = {
     "geofence": "galveston-county",
     "severity": "warning",
     "summary": "Standing water covering two lanes.",
+    "approval_pin": "3408",
 }
 
 ROSTER_TYPES = {"county_em", "nws", "uscg", "311"}
@@ -39,6 +40,8 @@ def client(monkeypatch: pytest.MonkeyPatch):
         "TWILIO_ACCOUNT_SID",
         "TWILIO_AUTH_TOKEN",
         "TWILIO_FROM_NUMBER",
+        "NOTIFY_DRY_RUN",
+        "DEMO_APPROVAL_PIN",
     ):
         monkeypatch.delenv(name, raising=False)
     app.dependency_overrides.clear()
@@ -60,6 +63,8 @@ def test_galveston_roster_and_template(client: TestClient) -> None:
     assert body["draft"]["source"] == "template"
     assert "Standing water covering two lanes." in body["draft"]["body"]
     assert "911" not in body["draft"]["body"]
+    assert body["mode"] == "dry-run-logged"
+    assert body["delivered"] == []
 
 
 def test_county_name_matches_same_roster(client: TestClient) -> None:
@@ -88,7 +93,34 @@ def test_unknown_geofence_returns_empty_roster(client: TestClient) -> None:
     assert body["geofence"] == "travis-county"
 
 
+def test_default_dry_run_does_not_send(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NOTIFY_SANDBOX_PHONES", "+15555550100")
+    fake = FakeSender()
+    app.dependency_overrides[get_sender] = lambda: fake
+
+    response = client.post("/api/notify", json=GALVESTON)
+
+    assert response.status_code == 200
+    assert fake.calls == []
+    assert response.json()["delivered"] == []
+    assert response.json()["mode"] == "dry-run-logged"
+
+
+def test_wrong_pin_rejects_without_send(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NOTIFY_DRY_RUN", "0")
+    monkeypatch.setenv("NOTIFY_SANDBOX_PHONES", "+15555550100")
+    fake = FakeSender()
+    app.dependency_overrides[get_sender] = lambda: fake
+
+    response = client.post("/api/notify", json={**GALVESTON, "approval_pin": "0000"})
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "invalid_approval_pin"
+    assert fake.calls == []
+
+
 def test_sends_only_sandbox_phones(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NOTIFY_DRY_RUN", "0")
     monkeypatch.setenv("NOTIFY_SANDBOX_PHONES", "+15555550100, +15555550101")
     fake = FakeSender()
     app.dependency_overrides[get_sender] = lambda: fake
@@ -141,6 +173,7 @@ def test_roster_phones_are_not_destinations(
     path = tmp_path / "orgs.json"
     path.write_text(json.dumps(roster))
     monkeypatch.setenv("NOTIFY_ROSTER_PATH", str(path))
+    monkeypatch.setenv("NOTIFY_DRY_RUN", "0")
     monkeypatch.setenv("NOTIFY_SANDBOX_PHONES", "+15555550100")
     fake = FakeSender()
     app.dependency_overrides[get_sender] = lambda: fake
@@ -172,6 +205,7 @@ def test_sandbox_number_matching_roster_is_refused(
     path = tmp_path / "orgs.json"
     path.write_text(json.dumps(roster))
     monkeypatch.setenv("NOTIFY_ROSTER_PATH", str(path))
+    monkeypatch.setenv("NOTIFY_DRY_RUN", "0")
     monkeypatch.setenv("NOTIFY_SANDBOX_PHONES", "15555550999")
     fake = FakeSender()
     app.dependency_overrides[get_sender] = lambda: fake
@@ -183,6 +217,7 @@ def test_sandbox_number_matching_roster_is_refused(
 
 
 def test_911_is_refused(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NOTIFY_DRY_RUN", "0")
     monkeypatch.setenv("NOTIFY_SANDBOX_PHONES", "9-1-1")
     fake = FakeSender()
     app.dependency_overrides[get_sender] = lambda: fake
@@ -199,7 +234,32 @@ def test_extra_to_field_is_rejected(client: TestClient) -> None:
     assert response.status_code == 422
 
 
+def test_dry_run_does_not_call_grok(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("XAI_API_KEY", "test-key")
+    posts: list[str] = []
+
+    class FakeClient:
+        def __init__(self, timeout: float = 15.0) -> None:
+            self.timeout = timeout
+
+        def post(self, url: str, headers: dict | None = None, json: dict | None = None):
+            posts.append(url)
+            raise AssertionError("dry-run notify must not call Grok")
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr("notify.draft.httpx.Client", FakeClient)
+
+    response = client.post("/api/notify", json=GALVESTON)
+
+    assert response.status_code == 200
+    assert response.json()["draft"]["source"] == "template"
+    assert posts == []
+
+
 def test_grok_draft_stays_on_the_mock(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NOTIFY_DRY_RUN", "0")
     monkeypatch.setenv("XAI_API_KEY", "test-key")
     posts: list[str] = []
 

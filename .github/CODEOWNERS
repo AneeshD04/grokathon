@@ -8,7 +8,13 @@
 /agents/ @AneeshD04
 /.cursor/ @AneeshD04
 /.github/ @AneeshD04
+/docs/ @AneeshD04
 
+# Product root = BDBI Flask app. Last matching pattern wins.
+/aquatic-sustainability/backend/ @DevanshuShahs
+/aquatic-sustainability/backend/static/ @buzzkabir
+
+# Repo-root stubs are not the app.
 /backend/ @DevanshuShahs
 /frontend/ @buzzkabir
 

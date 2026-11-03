@@ -1,0 +1,4 @@
+# Upstream uses Git LFS for *.pt *.tif *.pkl.
+# This vendored copy stores Flask-app blobs in git (all under GitHub's 100MB limit).
+# Excluded: keras classifier/ (~67MB JPEGs) and elevation_asia_7_5arc.tif (~468MB LFS).
+# See UPSTREAM.md.

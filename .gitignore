@@ -17,3 +17,6 @@ build/
 *.h5
 aquatic-sustainability/backend/.venv/
 aquatic-sustainability/**/__pycache__/
+aquatic-sustainability/keras classifier/
+aquatic-sustainability/backend/new_model/elevation_asia_7_5arc.tif
+aquatic-sustainability/**/.ipynb_checkpoints/

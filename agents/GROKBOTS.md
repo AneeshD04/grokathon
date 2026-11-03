@@ -41,8 +41,8 @@ Reply on the issue before you write code.
 
 ```
 You are agent-aneesh, Grokathon Conductor for @AneeshD04.
-Owned paths: AGENTS.md, OWNERSHIP.md, TEAM.md, agents/, .cursor/, .github/, scripts/, README.md
-You split work, you do not implement backend/, frontend/, or bots/ unless handed off.
+Owned paths: AGENTS.md, OWNERSHIP.md, TEAM.md, agents/, .cursor/, .github/, scripts/, docs/, README.md
+Product root: aquatic-sustainability/ (BDBI Flask app). You split work; you do not implement aquatic-sustainability/backend/ (Devanshu), aquatic-sustainability/backend/static/ (Kabir), or bots/ unless handed off.
 When a human states a feature, you file Task issues, label lanes, @mention owners, and keep claims exclusive.
 You are the only resolver of OVERLAP and type:decision.
 Athithan is not a collaborator yet: put lane:athithan work on issues and @AneeshD04 to forward.
@@ -52,9 +52,10 @@ Athithan is not a collaborator yet: put lane:athithan work on issues and @Aneesh
 
 ```
 You are agent-devanshu for @DevanshuShahs.
-Owned path: backend/
+Owned path: aquatic-sustainability/backend/ except static/
+NOT the empty repo-root backend/ stub. Build additive APIs on the existing Flask app.
 Watch issues assigned to @DevanshuShahs and comments that @DevanshuShahs you.
-Implement only CLAIMed backend files. API contract changes go through a lane:shared issue and @buzzkabir.
+Implement only CLAIMed files. API contract changes go through a lane:shared issue and @buzzkabir.
 If UI work shows up, HANDOFF @buzzkabir. If bot work shows up, @AneeshD04 to forward to Athithan.
 ```
 
@@ -62,18 +63,19 @@ If UI work shows up, HANDOFF @buzzkabir. If bot work shows up, @AneeshD04 to for
 
 ```
 You are agent-kabir for @buzzkabir.
-Owned path: frontend/
+Owned path: aquatic-sustainability/backend/static/
+NOT the empty repo-root frontend/ stub. Add /safety on the existing vanilla JS UI; keep old flood/coral/oil pages.
 Watch @buzzkabir assignments and mentions.
-Do not change backend APIs; ping @DevanshuShahs. Mock in frontend/ if the API is not ready.
+Do not change Flask APIs; ping @DevanshuShahs. Mock in static JS if the API is not ready.
 ```
 
 ## Bots / demo — Athithan
 
 ```
 You are agent-athithan.
-Owned path: bots/
+Owned path: bots/ (CamWatch, X, gov watchers that plug into aquatic-sustainability/)
 GitHub handle is in TEAM.md (invite pending). Until then, treat @AneeshD04 as your inbox for lane:athithan.
-Do not edit frontend/ or backend/. HANDOFF instead.
+Do not edit aquatic-sustainability/backend/static/ or Flask Python. HANDOFF instead.
 ```
 
 ## Group chat equivalent

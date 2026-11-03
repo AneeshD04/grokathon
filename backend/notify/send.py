@@ -1,11 +1,16 @@
-"""Twilio SMS restricted to NOTIFY_SANDBOX_PHONES. Roster numbers are never dialed."""
+"""Twilio SMS restricted to NOTIFY_SANDBOX_PHONES. Roster numbers are never dialed.
+
+Demo default is dry-run. Live Twilio requires NOTIFY_DRY_RUN=0 and a matching
+approval PIN. Rotate DEMO_APPROVAL_PIN before any real deployment (hackathon
+default is in docs/SAFETY-AGENT-DESIGN.md — not in issue titles).
+"""
 
 import os
 from typing import Protocol
 
 import httpx
 
-EMERGENCY_DIGITS = {"911", "1911"}
+EMERGENCY_DIGITS = {"911", "1911", "112", "999"}
 
 
 class SandboxRejected(Exception):
@@ -21,12 +26,22 @@ def digits(value: str) -> str:
 
 
 def is_emergency(value: str) -> bool:
-    return digits(value) in EMERGENCY_DIGITS
+    stripped = digits(value)
+    return stripped in EMERGENCY_DIGITS or stripped.endswith("911")
 
 
 def sandbox_numbers() -> list[str]:
     raw = os.environ.get("NOTIFY_SANDBOX_PHONES", "")
     return [part.strip() for part in raw.split(",") if part.strip()]
+
+
+def dry_run_enabled() -> bool:
+    raw = os.environ.get("NOTIFY_DRY_RUN", "1").strip().lower()
+    return raw not in ("0", "false", "no", "off")
+
+
+def expected_approval_pin() -> str:
+    return os.environ.get("DEMO_APPROVAL_PIN", "3408")
 
 
 def twilio_configured() -> bool:
@@ -82,7 +97,7 @@ class TwilioSender:
 
 
 def sender_from_env() -> TwilioSender | None:
-    if not twilio_configured():
+    if dry_run_enabled() or not twilio_configured():
         return None
     return TwilioSender(
         os.environ["TWILIO_ACCOUNT_SID"].strip(),

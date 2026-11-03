@@ -67,4 +67,18 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 Copy [`.env.example`](../.env.example) to `aquatic-sustainability/backend/.env` (gitignored). Add `GOOGLE_PLACES_API_KEY`, `NOTIFY_DRY_RUN=1`, and `DEMO_APPROVAL_PIN` there when #13 / #24 implement — do not commit `.env` or `.venv`. Leave Twilio unused.
 
+## Hackathon Maps key — restrictions only (no secret)
+
+Local `GOOGLE_MAPS_API_KEY` lives in gitignored `aquatic-sustainability/backend/.env`. **Never commit it. Never paste the value in issues, PRs, or docs.**
+
+| Fact | Value |
+| --- | --- |
+| Credential name | `aquatic-sustainability-maps` |
+| GCP project | Vectego |
+| API restrictions | Maps JavaScript API, Places API, Places API (New), Geocoding API |
+| Application restriction | HTTP referrers **only** |
+| Allowed referrers | `http://localhost:5001/*` and `http://127.0.0.1:5001/*` |
+
+Cloud Run (or any non-localhost origin) is **not** on this key yet. When we have a deploy URL, add that referrer in GCP — do not unrestrict the key. Follow-up: issue [#47](https://github.com/AneeshD04/grokathon/issues/47).
+
 **We do not have BDBI’s production Maps/Supabase/News/Earthdata keys.** Ask Rick/Michael only if you need their Cloud Run project; otherwise create your own free-tier keys for the hackathon.

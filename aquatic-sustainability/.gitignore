@@ -1,0 +1,30 @@
+.DS_Store
+# NASA / model caches
+backend/data/
+!backend/data/
+backend/data/*
+!backend/data/coral_bleaching/
+backend/data/coral_bleaching/*
+!backend/data/coral_bleaching/gbr_predictions_temporal_lstm.csv
+!backend/data/coral_bleaching/gbr_predictions_temporal_xgboost.csv
+!backend/data/coral_bleaching/centroid_names.json
+backend/gpm_temp/
+*.npy
+*.HDF5
+*.pyc
+
+# Local config / secrets
+.env
+backend/.env
+
+# Large dataset files
+crw_gbr_sequences_reduced_16.npz
+crw_gbr_nc_yearly
+
+# Python virtual environment
+venv/
+.venv/
+
+# Grokathon vendor exclusions (see UPSTREAM.md)
+keras classifier/
+backend/new_model/elevation_asia_7_5arc.tif

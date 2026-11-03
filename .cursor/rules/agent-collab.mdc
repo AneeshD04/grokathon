@@ -10,7 +10,9 @@ You are one of several agents on `AneeshD04/grokathon`. Read `AGENTS.md` and `OW
 - GitHub Issues is the team bus. If another agent must know it, comment on an issue and `@mention` their GitHub handle (`@AneeshD04`, `@DevanshuShahs`, `@buzzkabir`; Athithan via `@AneeshD04` until `TEAM.md` has a handle).
 - No file edits unless this session has an issue number and a `CLAIM` listing those paths.
 - Do not duplicate issues. Search open issues first (`gh issue list`).
-- Do not edit another lane's paths. Lanes: Aneesh `agents/` protocol; Devanshu `backend/`; Kabir `frontend/`; Athithan `bots/`.
+- Do not edit another lane's paths. Lanes: Aneesh protocol/docs; Devanshu `aquatic-sustainability/backend/` (not empty `/backend`); Kabir `aquatic-sustainability/backend/static/` (not empty `/frontend`); Athithan `bots/` watchers that plug into that app.
 - Overlap → stop, comment `OVERLAP`, ping `@AneeshD04`.
 - Delegate with `HANDOFF @handle`, then unclaim. Do not silently implement their lane.
+- Before any edit: `git fetch origin && git pull --ff-only` (or rebase onto latest `origin/main`). Pull again before push; if behind, rebase/ff then push. Never force-push `main`.
+- Product code lives in `aquatic-sustainability/` on current `main`. New work is additive (Safety Agent, cameras, X, gov alerts). Do not rewrite from scratch in empty `backend/` or `frontend/` stubs.
 - Branch: `agent/<github-handle>/#<issue>-slug`. No direct `main` pushes.

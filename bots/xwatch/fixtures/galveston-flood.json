@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "id": "fixture-galveston-flood-1",
+      "text": "Water over Seawall Blvd in Galveston. Storm surge flooding the Strand — several streets closed.",
+      "lat": 29.3013,
+      "lon": -94.7977,
+      "author": "@fixture_galveston",
+      "created_at": "2026-11-02T20:00:00Z",
+      "url": "https://example.test/status/fixture-galveston-flood-1",
+      "geofence_id": "houston-demo"
+    },
+    {
+      "id": "fixture-sports-skip",
+      "text": "Astros win in extra innings. Packed house at Minute Maid.",
+      "lat": 29.757,
+      "lon": -95.355,
+      "author": "@fixture_sports",
+      "created_at": "2026-11-02T20:05:00Z",
+      "url": "https://example.test/status/fixture-sports-skip"
+    }
+  ]
+}

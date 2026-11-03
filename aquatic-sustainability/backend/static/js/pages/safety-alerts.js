@@ -60,18 +60,20 @@
   }
 
   function whenMapReady(callback) {
-    if (state.map) {
-      callback(state.map);
-      return;
+    function use(map) {
+      if (!map || !window.google || !google.maps || !google.maps.Marker) return false;
+      state.map = map;
+      callback(map);
+      return true;
     }
+    if (use(state.map || window.floodMap || window.map)) return;
+    window.addEventListener("flood-map-ready", function (event) {
+      if (event.detail && event.detail.map) use(event.detail.map);
+    });
     const timer = setInterval(function () {
-      const map = window.map;
-      if (map && window.google && google.maps && google.maps.Marker) {
-        clearInterval(timer);
-        state.map = map;
-        callback(map);
-      }
+      if (use(window.floodMap || window.map)) clearInterval(timer);
     }, 250);
+    setTimeout(function () { clearInterval(timer); }, 8000);
   }
 
   function markerFor(alert) {
@@ -211,27 +213,93 @@
     }
   }
 
-  function fakeAlert() {
-    const stamp = Date.now();
-    return {
-      id: "inject-" + stamp,
-      ts: new Date().toISOString(),
-      source: "camera",
-      severity: "warning",
-      lat: GALVESTON.lat,
-      lon: GALVESTON.lng,
-      geofence_id: "galveston-county",
-      title: "Standing water on Broadway",
-      summary: "Judge inject: standing water covering two lanes near Seawall.",
-      evidence: {
-        thumb_url: null,
-        raw: {
-          vision_class: "standing_water",
-          filename: "judge-inject.jpg",
-        },
+  function demoAlerts() {
+    const ts = new Date().toISOString();
+    const note = " Demo only. Not a live NWS product and not a lab or oil-spill model.";
+    return [
+      {
+        id: "demo-surge",
+        ts: ts,
+        source: "nws",
+        severity: "warning",
+        lat: 29.276,
+        lon: -94.813,
+        geofence_id: "galveston-county",
+        title: "Demo: Galveston coastal surge",
+        summary: "Simulated coastal surge along the Seawall." + note,
+        evidence: { thumb_url: null, raw: { demo: true } },
+        dedupe_key: "demo:galveston:coastal-surge",
       },
-      dedupe_key: "inject-" + stamp,
+      {
+        id: "demo-oil",
+        ts: ts,
+        source: "news",
+        severity: "critical",
+        lat: 29.348,
+        lon: -94.89,
+        geofence_id: "galveston-county",
+        title: "Demo: ship-channel oil and chemical release",
+        summary: "Simulated ship-channel oil and chemical release. Fixture report only." + note,
+        evidence: { thumb_url: null, raw: { demo: true } },
+        dedupe_key: "demo:galveston:ship-channel-release",
+      },
+      {
+        id: "demo-report",
+        ts: ts,
+        source: "x",
+        severity: "info",
+        lat: GALVESTON.lat,
+        lon: GALVESTON.lng,
+        geofence_id: "galveston-county",
+        title: "Demo: public report near Broadway",
+        summary: "Fixture public report of water across Broadway. Not a live post." + note,
+        evidence: { thumb_url: null, raw: { demo: true } },
+        dedupe_key: "demo:galveston:public-report",
+      },
+    ];
+  }
+
+  function postAlert(alert) {
+    const body = {
+      source: alert.source,
+      severity: alert.severity,
+      lat: alert.lat,
+      lon: alert.lon,
+      geofence_id: alert.geofence_id,
+      title: alert.title,
+      summary: alert.summary,
+      evidence: alert.evidence,
+      dedupe_key: alert.dedupe_key,
+      ts: alert.ts,
     };
+    const urls = ["/api/alerts", "http://127.0.0.1:8000/api/alerts"];
+    function tryNext(index) {
+      if (index >= urls.length) return Promise.resolve(null);
+      return fetch(urls[index], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }).then(function (res) {
+        if (!res.ok) return tryNext(index + 1);
+        return res.json().then(function (data) {
+          return (data && data.alert) || data;
+        }).catch(function () { return null; });
+      }).catch(function () { return tryNext(index + 1); });
+    }
+    return tryNext(0);
+  }
+
+  function showDemoScenario() {
+    const rows = demoAlerts();
+    rows.forEach(function (alert, index) {
+      addAlert(alert, { fly: index === 0 });
+    });
+    setStatus("Demo only — 3 simulated alerts. Nothing was sent.");
+    rows.forEach(function (alert) {
+      postAlert(alert).then(function (saved) {
+        if (saved && saved.dedupe_key) addAlert(saved, { fly: false });
+      });
+    });
   }
 
   function connectStream(index) {
@@ -283,9 +351,8 @@
   }
 
   if (injectBtn) {
-    injectBtn.addEventListener("click", function () {
-      addAlert(fakeAlert(), { fly: true });
-    });
+    injectBtn.textContent = "Inject demo scenario";
+    injectBtn.addEventListener("click", showDemoScenario);
   }
 
   if (window.location.hash === "#oem-alerts") {

@@ -41,6 +41,17 @@
   }
 
   function draftMessage(alert) {
+    const alerts = window.SafetyOem && typeof window.SafetyOem.getAlerts === "function"
+      ? window.SafetyOem.getAlerts()
+      : [];
+    if (alerts.length > 1) {
+      return (
+        "Demo only. Not a live NWS product and not a lab or oil-spill model. " +
+        alerts.map(function (item) {
+          return (item.title || "Alert") + ": " + (item.summary || "");
+        }).join(" ")
+      );
+    }
     if (alert && alert.summary) {
       const klass =
         alert.evidence && alert.evidence.raw && alert.evidence.raw.vision_class

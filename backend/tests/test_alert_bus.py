@@ -9,14 +9,18 @@ import uvicorn
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.store import bus
+from app.store import MAX_ALERTS, MAX_WATCHES, bus
 
 
 @pytest.fixture(autouse=True)
 def clean_bus():
     bus.reset()
+    bus.max_alerts = MAX_ALERTS
+    bus.max_watches = MAX_WATCHES
     yield
     bus.reset()
+    bus.max_alerts = MAX_ALERTS
+    bus.max_watches = MAX_WATCHES
 
 
 def test_watch_requires_bbox_or_county():
@@ -69,6 +73,51 @@ def test_dedupe_suppresses_second_publish():
     assert body["deduped"] is True
     assert body["alert"]["id"] == first["alert"]["id"]
     assert len(client.get("/api/alerts").json()) == 1
+
+
+def test_rejects_non_http_thumb_url():
+    client = TestClient(app)
+    payload = _alert("cam:bad")
+    payload["evidence"] = {"thumb_url": "javascript:alert(1)", "raw": {}}
+    assert client.post("/api/alerts", json=payload).status_code == 422
+    payload["evidence"] = {"thumb_url": "file:///etc/passwd", "raw": {}}
+    assert client.post("/api/alerts", json=payload).status_code == 422
+
+
+def test_alert_cap_drops_oldest():
+    bus.max_alerts = 2
+    client = TestClient(app)
+    client.post("/api/alerts", json=_alert("cam:a"))
+    client.post("/api/alerts", json=_alert("cam:b"))
+    client.post("/api/alerts", json=_alert("cam:c"))
+    keys = [row["dedupe_key"] for row in client.get("/api/alerts").json()]
+    assert keys == ["cam:b", "cam:c"]
+
+
+def test_watch_cap_returns_429():
+    bus.max_watches = 1
+    client = TestClient(app)
+    first = client.post(
+        "/api/watches", json={"county": "Galveston County", "sources": ["nws"]}
+    )
+    assert first.status_code == 201
+    second = client.post(
+        "/api/watches", json={"county": "Harris County", "sources": ["nws"]}
+    )
+    assert second.status_code == 429
+
+
+def test_token_required_when_configured(monkeypatch):
+    monkeypatch.setenv("ALERT_BUS_TOKEN", "secret-token")
+    client = TestClient(app)
+    denied = client.post("/api/alerts", json=_alert("cam:token"))
+    assert denied.status_code == 401
+    ok = client.post(
+        "/api/alerts",
+        json=_alert("cam:token"),
+        headers={"X-Alert-Bus-Token": "secret-token"},
+    )
+    assert ok.status_code == 201
 
 
 def test_post_shows_up_on_sse_within_one_second():

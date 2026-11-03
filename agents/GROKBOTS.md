@@ -22,12 +22,17 @@ ISSUE BUS:
 - If two CLAIMs lock the same path, STOP and @AneeshD04 with OVERLAP.
 
 GIT:
+- Before any edit: git fetch origin && git pull --ff-only (or rebase onto latest origin/main)
+- Before push: fetch/pull again. If behind, rebase or ff, then push. Never force-push main.
+- Product code lives in aquatic-sustainability/ — build on current main, not a stale copy or empty backend/frontend stubs
 - Branch agent/<your-github-handle>/#<issue>-slug
 - One issue, one PR
 - Do not push to main
 - Do not edit files outside your owned paths in OWNERSHIP.md unless the issue is lane:shared and you were @mentioned
 
-Start every session with: gh issue list --state open
+Start every session with:
+git fetch origin && git pull --ff-only
+gh issue list --state open
 Then look at assignments and @mentions for YOUR handle.
 Reply on the issue before you write code.
 ```

@@ -6,6 +6,7 @@ contract files land.
 
 from enum import Enum
 from typing import Any
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -17,6 +18,7 @@ class Source(str, Enum):
     x = "x"
     model = "model"
     news = "news"
+    places = "places"
 
 
 class Severity(str, Enum):
@@ -28,10 +30,18 @@ class Severity(str, Enum):
 
 class WatchCreate(BaseModel):
     bbox: list[float] | None = None
-    county: str | None = None
-    sources: list[Source] = Field(min_length=1)
-    camera_ids: list[str] = Field(default_factory=list)
-    geofence_id: str | None = None
+    county: str | None = Field(default=None, max_length=120)
+    sources: list[Source] = Field(min_length=1, max_length=16)
+    camera_ids: list[str] = Field(default_factory=list, max_length=32)
+    geofence_id: str | None = Field(default=None, max_length=120)
+
+    @field_validator("camera_ids")
+    @classmethod
+    def camera_ids_short(cls, value: list[str]) -> list[str]:
+        for item in value:
+            if len(item) > 120:
+                raise ValueError("camera_id too long")
+        return value
 
     @model_validator(mode="after")
     def require_geofence(self) -> "WatchCreate":
@@ -63,8 +73,30 @@ class Watch(BaseModel):
 
 
 class Evidence(BaseModel):
-    thumb_url: str | None = None
+    thumb_url: str | None = Field(default=None, max_length=2048)
     raw: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("thumb_url")
+    @classmethod
+    def http_url_only(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip()
+        if not text:
+            return None
+        parsed = urlparse(text)
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            raise ValueError("thumb_url must be an http(s) URL")
+        if parsed.username or parsed.password:
+            raise ValueError("thumb_url must not include credentials")
+        return text
+
+    @field_validator("raw")
+    @classmethod
+    def raw_must_be_small(cls, value: dict[str, Any]) -> dict[str, Any]:
+        if len(value) > 32:
+            raise ValueError("evidence.raw has too many keys")
+        return value
 
 
 class AlertCreate(BaseModel):
@@ -72,12 +104,12 @@ class AlertCreate(BaseModel):
     severity: Severity
     lat: float = Field(ge=-90, le=90)
     lon: float = Field(ge=-180, le=180)
-    geofence_id: str = Field(min_length=1)
-    title: str = Field(min_length=1)
-    summary: str = Field(min_length=1)
+    geofence_id: str = Field(min_length=1, max_length=120)
+    title: str = Field(min_length=1, max_length=200)
+    summary: str = Field(min_length=1, max_length=4000)
     evidence: Evidence = Field(default_factory=Evidence)
-    dedupe_key: str = Field(min_length=1)
-    ts: str | None = None
+    dedupe_key: str = Field(min_length=1, max_length=200)
+    ts: str | None = Field(default=None, max_length=64)
 
     @field_validator("ts")
     @classmethod

@@ -41,7 +41,7 @@ Flask (Gunicorn on Cloud Run, port from $PORT)
 
 - **Deploy:** Docker → Cloud Build → Cloud Run (`DEPLOYMENT.md`). CORS allowlist includes the Cloud Run URL and localhost `:5000`/`:5001`.
 - **UI:** vanilla JS, Google Maps JS API (key fetched from `/api/config/maps-key`).
-- **Research folders** (not served by Flask): `coral-reef-model/`, `xgboost-model/`, `coral reef analysis/`, `Time Series Models/` (crop yield notebooks), `keras classifier/` (upstream only).
+- **Research folders** (not served by Flask): `coral-reef-model/`, `xgboost-model/`, `coral reef analysis/`, `Time Series Models/` (crop yield notebooks). `keras classifier/` (~5,637 JPEGs) is **excluded** from this vendor copy — see [`../aquatic-sustainability/UPSTREAM.md`](../aquatic-sustainability/UPSTREAM.md).
 
 ## Models and data sources (existing)
 

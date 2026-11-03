@@ -4,6 +4,8 @@ Demo region default: **Houston–Galveston coastal / Harris County** (flood + ca
 
 These are public, geolocated feeds we can list on a map, click to preview, and attach a watcher to. Prefer **still JPEG** for Grok vision (cheaper than HLS). Respect ToS; server-side fetch only.
 
+**Businesses are not cameras.** Local shops/hotels/pharmacies in the marked county come from **Google Places Nearby Search**, not this catalog. See [`SAFETY-AGENT-DESIGN.md`](SAFETY-AGENT-DESIGN.md#fan-out-after-confirm) and issue #24. Camera pins (#15) and business pins (#25) are separate map layers. Places phones are display + PIN-gated dry-run only — the demo never dials them.
+
 ## Tier 1 — use for the demo (JSON + lat/lon)
 
 | Source | What | How to query | Click-to-view |
@@ -33,6 +35,7 @@ When the user draws a county/area:
 2. `GET /api/cameras?bbox=minLon,minLat,maxLon,maxLat` returns cameras from a **catalog JSON** we ship in `shared/cameras/`.
 3. Map markers. Click → latest JPEG (and HLS if present).
 4. Spawn one **CamWatch** sub-agent per selected camera (cap **8** for demo). Each samples every 15–30s → Grok vision → alert if water/overtop/debris/crowd.
+5. **Separately:** `GET`/`POST /api/businesses/nearby` (#24) runs Places Nearby Search in the same geofence (cap 20). Do not stuff Places POIs into `shared/cameras/`. Contacting those businesses is #13 and is **dry-run + approval PIN gated** (see the design doc — never put the PIN in issue titles). The demo never dials them.
 
 Seed the catalog by hand for Houston+Galveston (10–20 cams) plus FL511 query for Florida counties. Do not try to ingest every DOT camera in the US tonight.
 

@@ -22,11 +22,12 @@ class OrgType(str, Enum):
 class NotifyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    geofence: str = Field(min_length=1)
+    geofence: str = Field(min_length=1, max_length=120)
     severity: Severity
-    summary: str = Field(min_length=1)
+    summary: str = Field(min_length=1, max_length=4000)
+    approval_pin: str = Field(min_length=1, max_length=32)
 
-    @field_validator("geofence", "summary")
+    @field_validator("geofence", "summary", "approval_pin")
     @classmethod
     def strip_required(cls, value: str) -> str:
         text = value.strip()
@@ -65,4 +66,5 @@ class NotifyResponse(BaseModel):
     draft: Draft
     delivered: list[Delivery]
     sandbox_only: bool = True
+    mode: str = "dry-run-logged"
     roster: list[RosterOrg]

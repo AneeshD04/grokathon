@@ -2,22 +2,26 @@
 
 Agents **must not** edit another lane's paths unless a `lane:shared` issue `@mentions` them and they `CLAIM` those files.
 
+## Product root (binding)
+
+**Build on `aquatic-sustainability/`** — the current BDBI Flask app (see `aquatic-sustainability/UPSTREAM.md`).
+
+New work is **additive** on that tree: Safety Agent, cameras, X, gov alerts. Do **not** rewrite the product from scratch in repo-root `/frontend` or empty `/backend`.
+
 | Path | Owner | GitHub |
 | --- | --- | --- |
 | `AGENTS.md`, `OWNERSHIP.md`, `TEAM.md` | Conductor | `@AneeshD04` |
 | `agents/` | Conductor | `@AneeshD04` |
 | `.cursor/` | Conductor | `@AneeshD04` |
 | `.github/` | Conductor | `@AneeshD04` |
-| `backend/` | Backend | `@DevanshuShahs` |
-| `frontend/` | Frontend | `@buzzkabir` |
-| `bots/` | Grok Bot / demo | Athithan (handle in `TEAM.md`) |
+| `docs/`, `README.md`, `scripts/` | Conductor | `@AneeshD04` |
+| `aquatic-sustainability/backend/` except `static/` | Backend / API | `@DevanshuShahs` |
+| `aquatic-sustainability/backend/static/` | Frontend / UI | `@buzzkabir` |
+| `bots/` | Grok Bot watchers + demo glue that **plug into** the Flask app | Athithan (handle in `TEAM.md`; ping `@AneeshD04` until invited) |
+| `aquatic-sustainability/` research + deploy (`coral-reef-model/`, Docker, …) | Conductor unless a task `@mentions` you | `@AneeshD04` |
 | `shared/` | Shared contracts | **all** — `lane:shared` issue required |
-| `scripts/` | Conductor + whoever is `@mentioned` | default `@AneeshD04` |
-| `docs/` | Conductor | `@AneeshD04` |
-| `README.md` | Conductor, PRs welcome | `@AneeshD04` |
-| `aquatic-sustainability/` | Shared BDBI app snapshot | `lane:shared` until split; see issue #6 |
-| `aquatic-sustainability/backend/` (API after split) | Backend | `@DevanshuShahs` |
-| `aquatic-sustainability/backend/static/` (UI after split) | Frontend | `@buzzkabir` |
+| repo-root `backend/` | **Stub only. Not the app.** Lane marker | `@DevanshuShahs` — do not implement product APIs here |
+| repo-root `frontend/` | **Stub only. Not the app.** Lane marker | `@buzzkabir` — do not implement product UI here |
 
 If a file is not listed, treat it as `shared/` and open a `type:decision` issue before adding it.
 

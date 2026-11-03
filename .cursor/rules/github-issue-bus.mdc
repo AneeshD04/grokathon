@@ -12,7 +12,7 @@ git fetch origin && git pull --ff-only
 gh issue list --state open --limit 50
 ```
 
-Before edit or push: sync to latest `origin/main` (rebase if already on a branch). Never force-push `main`. Product lives in `aquatic-sustainability/`.
+Before edit or push: sync to latest `origin/main` (rebase if already on a branch). Never force-push `main`. Product lives in `aquatic-sustainability/` — CLAIM paths under that tree, not empty `/backend` or `/frontend`.
 
 - New work → issue template `task`. Ping the owner in the body.
 - Message someone → comment `@Handle` or template `ping`. Title `ping(@Handle): topic`.

@@ -41,7 +41,7 @@ Flask (Gunicorn on Cloud Run, port from $PORT)
 
 - **Deploy:** Docker → Cloud Build → Cloud Run (`DEPLOYMENT.md`). CORS allowlist includes the Cloud Run URL and localhost `:5000`/`:5001`.
 - **UI:** vanilla JS, Google Maps JS API (key fetched from `/api/config/maps-key`).
-- **Research folders** (not served by Flask): `coral-reef-model/`, `xgboost-model/`, `coral reef analysis/`, `Time Series Models/` (crop yield notebooks), `keras classifier/` (upstream only).
+- **Research folders** (not served by Flask): `coral-reef-model/`, `xgboost-model/`, `coral reef analysis/`, `Time Series Models/` (crop yield notebooks). `keras classifier/` (~5,637 JPEGs) is **excluded** from this vendor copy — see [`../aquatic-sustainability/UPSTREAM.md`](../aquatic-sustainability/UPSTREAM.md).
 
 ## Models and data sources (existing)
 
@@ -123,3 +123,18 @@ See also [MISSING-KEYS.md](MISSING-KEYS.md).
 ## Why this is a good Grokathon base
 
 The product already geolocates water risk and has a flood model + coral bundle. It does **not** have a conversational operator, live watchers, or camera/social/gov fusion. That is exactly the Safety Agent layer in [SAFETY-AGENT-DESIGN.md](SAFETY-AGENT-DESIGN.md).
+
+## Safety Agent glue (do not invent models)
+
+Local-government OEM marks a region → ModelWatch **polls these existing APIs** (interval + on-demand) → thresholds emit `Alert{source:model}` on the same bus as cameras/NWS → Places businesses in the polygon are listed as likely impacted → **Notify impacted businesses** is PIN-gated **dry-run** (log only, no Twilio). Spec: [SAFETY-AGENT-DESIGN.md](SAFETY-AGENT-DESIGN.md#modelwatch--bdbi-analysis-glue). Issues: [#34](https://github.com/AneeshD04/grokathon/issues/34) (docs) · [#35](https://github.com/AneeshD04/grokathon/issues/35) (poller) · [#7](https://github.com/AneeshD04/grokathon/issues/7).
+
+| This app has | Glue may |
+| --- | --- |
+| **Real** DualCNN-LSTM `POST /api/flood-risk` (NASA GPM+SMAP, delayed; synthetic if `FAST_START_FLOOD_DATA=1`) | Emit model alert when in-polygon `prob >= 0.5` |
+| **Real batch** `GET /api/coral-bleaching` (GBR CSVs) | Emit only if the watch intersects GBR centroids (`prob_severe`) |
+| **Dummy** `GET /api/drought` / `GET /api/flood` polygons | Overlay at most; copy must say dummy. Flood dummy is **not** DualCNN-LSTM |
+| Oil dummy JS; keras **not** served | Ignore |
+| Affordability **not implemented** | Never mention as a model |
+| `GET /api/news` | Not hydrology evidence |
+
+Message copy cites **flood probability / DualCNN-LSTM / NASA**, not fake water-quality lab data.

@@ -4,10 +4,10 @@ Fixes #
 
 ## Lane
 
-- [ ] aneesh
-- [ ] devanshu (`backend/`)
-- [ ] kabir (`frontend/`)
-- [ ] athithan (`bots/`)
+- [ ] aneesh (protocol / docs)
+- [ ] devanshu (`aquatic-sustainability/backend/` except static)
+- [ ] kabir (`aquatic-sustainability/backend/static/`)
+- [ ] athithan (`bots/` watchers on that app)
 - [ ] shared (link the `lane:shared` issue)
 
 ## CLAIM

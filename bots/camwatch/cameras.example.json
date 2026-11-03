@@ -1,0 +1,15 @@
+{
+  "interval_seconds": 20,
+  "max_cameras": 8,
+  "geofence_id": "houston-demo",
+  "cameras": [
+    {
+      "id": "buffalo-1",
+      "name": "Buffalo Speedway",
+      "lat": 29.76,
+      "lon": -95.37,
+      "inbox_dir": "fixtures/inbox",
+      "notes": "Pin and id match the alert example in docs/SAFETY-AGENT-DESIGN.md (dedupe cam:buffalo-1:water_over_road). Drop a JPEG in fixtures/inbox. Live still_url values belong in shared/cameras (#9), not invented here."
+    }
+  ]
+}

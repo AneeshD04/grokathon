@@ -15,18 +15,22 @@ Issue bus: [Issues](https://github.com/AneeshD04/grokathon/issues)
 5. **Talk with `@mentions`.** Ping the GitHub handle, not a nickname. The ping *is* the handoff.
 6. **One agent, one claimed task.** Finish or hand off before claiming another P0/P1.
 7. **Always sync before you edit or push.** `git fetch origin && git pull --ff-only` (or rebase onto latest `origin/main`) before the first file change. Pull again before you push; if behind, fast-forward or rebase, then push. Never force-push `main`. Product code lives in `aquatic-sustainability/` — build on current `main`, not a stale clone or empty `backend/` / `frontend/` stubs.
-8. **Grok/xAI quota discipline.** Do not burn the demo budget. No Grok call for PIN dry-run notify; cap camera vision; cache flood-risk/NWS; one Safety Agent (batch, not a swarm); prefer `FAST_START` / mocks; on 429 degrade to templates and comment on the issue bus. Binding detail: [`agents/GROKBOTS.md`](agents/GROKBOTS.md) and [`docs/SAFETY-AGENT-DESIGN.md`](docs/SAFETY-AGENT-DESIGN.md). Rate-limit impl is #33.
+8. **Conductor files issues and reviews PRs.** `@AneeshD04` does not implement backend, frontend, or bots unless a lane owner `HANDOFF`s those paths.
+
+9. **Grok/xAI quota discipline.** Do not burn the demo budget. No Grok call for PIN dry-run notify; cap camera vision; cache flood-risk/NWS; one Safety Agent (batch, not a swarm); prefer `FAST_START` / mocks; on 429 degrade to templates and comment on the issue bus. Binding detail: [`agents/GROKBOTS.md`](agents/GROKBOTS.md) and [`docs/SAFETY-AGENT-DESIGN.md`](docs/SAFETY-AGENT-DESIGN.md). Rate-limit impl is #33.
 
 ## Roster (ping these)
 
 | Human | GitHub | Agent id | Lane |
 | --- | --- | --- | --- |
-| Aneesh | `@AneeshD04` | `agent-aneesh` | Conductor, product, `agents/`, protocol |
-| Devanshu | `@DevanshuShahs` | `agent-devanshu` | Backend / API `backend/` |
-| Kabir | `@buzzkabir` | `agent-kabir` | Frontend `frontend/` |
-| Athithan | **invite pending** — set handle in `TEAM.md` | `agent-athithan` | Grok Bots + demo `bots/` |
+| Aneesh | `@AneeshD04` | `agent-aneesh` | Conductor, product, protocol, `agents/`, `docs/` |
+| Devanshu | `@DevanshuShahs` | `agent-devanshu` | API: `aquatic-sustainability/backend/` (not empty `/backend`) |
+| Kabir | `@buzzkabir` | `agent-kabir` | UI: `aquatic-sustainability/backend/static/` (not empty `/frontend`) |
+| Athithan | **invite pending** — set handle in `TEAM.md` | `agent-athithan` | `bots/` + safety watchers that plug into that Flask app |
 
 Until Athithan is a collaborator, ping `@AneeshD04` on `lane:athithan` issues and say `please forward to Athithan`.
+
+**Product root:** `aquatic-sustainability/` is the BDBI app teammates extend. Additive features only (Safety Agent, cameras, X, gov alerts). Do not rewrite from scratch in `/frontend` or empty `/backend`.
 
 Per-agent briefs live in [`agents/`](agents/). Grok Bot paste-prompts live in [`agents/GROKBOTS.md`](agents/GROKBOTS.md).
 
@@ -118,6 +122,7 @@ please: <the actual ask>
 See `OWNERSHIP.md`. Short version:
 
 - Edit **only** your lane unless the issue is `lane:shared` **and** you were `@mentioned`.
+- Product code is `aquatic-sustainability/`. Claim paths under that tree.
 - `agents/`, `AGENTS.md`, `.cursor/rules/` → Aneesh unless he hands off.
 - Shared contracts (`shared/`) need a `type:decision` or `lane:shared` issue before changing.
 

@@ -268,6 +268,19 @@ Drafted SMS/email **must** mention the model evidence actually present, for exam
 
 Never write “e.coli / turbidity / boil-water lab sample” unless we add a real source later (we have not). Dummy drought copy must say **hardcoded overlay**. Synthetic flood must say **synthetic precip**.
 
+## Grok / xAI quota discipline (binding)
+
+Finite xAI credits — do not empty the account before demo. These rules are **binding** for every watcher, chat proxy, and Grok Bot (see also `AGENTS.md` §9 and `agents/GROKBOTS.md`). Rate-limit implementation is [#33](https://github.com/AneeshD04/grokathon/issues/33) (`GROK_MAX_RPM` or similar). Do not invent a second limiter.
+
+| Surface | Rule |
+| --- | --- |
+| **PIN dry-run notify** | Template string only. **No Grok call.** The PIN path logs drafted copy; it does not generate it. |
+| **Camera vision** | Max **1 cam every 15–30s**. Skip if the JPEG/frame hash is unchanged. **Stop** the watcher when the region is not on screen (tab hidden, geofence cleared, or `/safety` left). |
+| **Flood-risk / NWS** | Cache by lat/lon (and a short TTL). Do **not** re-ask Grok for the same point. Prefer the Flask `/api/flood-risk` and `api.weather.gov` over a Grok rewrite. |
+| **Chat** | **One** Safety Agent. Batch-summarize businesses (`draft_alert` once for the roster). Not a Grok call per POI. |
+| **Dev** | Prefer `FAST_START` / mocks. No overnight watcher loops. Kill CamWatch/X/Gov loops when you stop working. |
+| **429 / quota errors** | Degrade to templates. Comment on the issue bus ([#33](https://github.com/AneeshD04/grokathon/issues/33)). Never dump API keys. |
+
 ## Safety Agent tools (Grok)
 
 - `set_watch(geofence, sources[])` — include `"model"` for ModelWatch

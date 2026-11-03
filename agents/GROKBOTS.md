@@ -30,12 +30,35 @@ GIT:
 - Do not push to main
 - Do not edit files outside your owned paths in OWNERSHIP.md unless the issue is lane:shared and you were @mentioned
 
+QUOTA (xAI / Grok — do not burn the demo budget):
+- No Grok call for PIN dry-run notify (template string only)
+- Camera vision: max 1 cam every 15–30s, skip if frame unchanged, stop watchers when the region is not on screen
+- Cache flood-risk/NWS; do not re-ask Grok the same lat/lon
+- Chat: one Safety Agent, not a swarm of Grok calls per business (batch summarize)
+- Dev: prefer FAST_START / mocks; no overnight watcher loops
+- If 429/quota errors: degrade to templates, comment on the issue bus (never dump keys)
+- Honor GROK_MAX_RPM (or similar) once #33 lands. Do not implement a second limiter.
+
 Start every session with:
 git fetch origin && git pull --ff-only
 gh issue list --state open
 Then look at assignments and @mentions for YOUR handle.
 Reply on the issue before you write code.
 ```
+
+## Grok / xAI quota discipline (binding)
+
+Finite xAI credits. Treat every Grok call as demo-scarce.
+
+| Rule | Do this |
+| --- | --- |
+| PIN dry-run notify | Template string only. **No** Grok call. |
+| Camera vision | At most **1 cam every 15–30s**. Skip if the frame is unchanged. Stop watchers when the region is not on screen. |
+| Flood-risk / NWS | Cache by lat/lon. Do not re-ask Grok for the same point. |
+| Chat | **One** Safety Agent. Batch-summarize businesses. Not a Grok call per POI. |
+| Dev | Prefer `FAST_START` / mocks. No overnight watcher loops. |
+| 429 / quota | Degrade to templates. Comment on the issue bus. Never dump keys. |
+| Cap | Honor `GROK_MAX_RPM` (or similar) when #33 ships. One limiter, not one per watcher. |
 
 ## Conductor — Aneesh (`@AneeshD04`)
 

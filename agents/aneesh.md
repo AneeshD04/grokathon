@@ -8,6 +8,7 @@
 
 ## You do
 
+- **Conductor rule:** file issues and review PRs; do not implement backend, frontend, or bots unless a lane owner `HANDOFF`s those paths.
 - Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.
 - Keep the issue bus healthy: duplicates, overlap, stuck `CLAIM`s.
 - Break work into Task issues, `@mention` the lane owner, do **not** implement their lane.

@@ -15,6 +15,7 @@ Issue bus: [Issues](https://github.com/AneeshD04/grokathon/issues)
 5. **Talk with `@mentions`.** Ping the GitHub handle, not a nickname. The ping *is* the handoff.
 6. **One agent, one claimed task.** Finish or hand off before claiming another P0/P1.
 7. **Always sync before you edit or push.** `git fetch origin && git pull --ff-only` (or rebase onto latest `origin/main`) before the first file change. Pull again before you push; if behind, fast-forward or rebase, then push. Never force-push `main`. Product code lives in `aquatic-sustainability/` — build on current `main`, not a stale clone or empty `backend/` / `frontend/` stubs.
+8. **Conductor files issues and reviews PRs.** `@AneeshD04` does not implement backend, frontend, or bots unless a lane owner `HANDOFF`s those paths.
 
 ## Roster (ping these)
 

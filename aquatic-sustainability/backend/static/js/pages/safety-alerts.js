@@ -14,6 +14,8 @@
     "http://127.0.0.1:8000/api/alerts",
     "http://localhost:8000/api/alerts",
   ];
+  const POST_URLS = LIST_URLS.slice();
+  const DEMO_SCENARIO_ID = "galveston-bay-chemical";
 
   const GALVESTON = { lat: 29.3013, lng: -94.7977 };
   const state = {
@@ -29,6 +31,9 @@
   };
   window.SafetyOem.getAlerts = function getAlerts() {
     return state.alerts.slice();
+  };
+  window.SafetyOem.injectDemoScenario = function injectDemoScenario() {
+    return injectScenario();
   };
 
   function setStatus(text) {
@@ -148,7 +153,7 @@
     if (!state.alerts.length) {
       const empty = document.createElement("p");
       empty.className = "muted";
-      empty.textContent = "No live alerts yet. Inject one to demo without a refresh.";
+      empty.textContent = "No live alerts yet. Inject the demo coastal spill to show one without a refresh.";
       listEl.appendChild(empty);
       return;
     }
@@ -211,32 +216,143 @@
     }
   }
 
-  function fakeAlert() {
-    const stamp = Date.now();
-    return {
-      id: "inject-" + stamp,
-      ts: new Date().toISOString(),
-      source: "camera",
-      severity: "warning",
-      lat: GALVESTON.lat,
-      lon: GALVESTON.lng,
-      geofence_id: "galveston-county",
-      title: "Standing water on Broadway",
-      summary: "Judge inject: standing water covering two lanes near Seawall.",
-      evidence: {
-        thumb_url: null,
-        raw: {
-          vision_class: "standing_water",
-          filename: "judge-inject.jpg",
+  function demoAlerts() {
+    const ts = new Date().toISOString();
+    return [
+      {
+        ts: ts,
+        source: "nws",
+        severity: "warning",
+        lat: 29.2694,
+        lon: -94.8126,
+        geofence_id: "galveston-county",
+        title: "DEMO coastal surge on Galveston Island",
+        summary:
+          "Demo only. Simulated coastal flood and storm surge along the Seawall. Not a live National Weather Service product.",
+        evidence: {
+          thumb_url: null,
+          raw: {
+            demo: "true",
+            scenario: DEMO_SCENARIO_ID,
+            hazard: "coastal-flood",
+            event: "storm-surge",
+          },
         },
+        dedupe_key: "demo:" + DEMO_SCENARIO_ID + ":coastal",
       },
-      dedupe_key: "inject-" + stamp,
-    };
+      {
+        ts: ts,
+        source: "news",
+        severity: "critical",
+        lat: 29.3734,
+        lon: -94.8875,
+        geofence_id: "galveston-county",
+        title: "DEMO oil and chemical release in Galveston Bay",
+        summary:
+          "Demo only. Simulated petroleum sheen and industrial chemical release near the Texas City ship channel, pushed onshore by the coastal surge. Not a lab result and not a trained oil-spill model.",
+        evidence: {
+          thumb_url: null,
+          raw: {
+            demo: "true",
+            scenario: DEMO_SCENARIO_ID,
+            hazard: "oil-chemical-release",
+            product: "petroleum-and-industrial-chemical",
+          },
+        },
+        dedupe_key: "demo:" + DEMO_SCENARIO_ID + ":spill",
+      },
+      {
+        ts: ts,
+        source: "x",
+        severity: "watch",
+        lat: GALVESTON.lat,
+        lon: GALVESTON.lng,
+        geofence_id: "galveston-county",
+        title: "DEMO report: sheen at the Galveston ferry",
+        summary:
+          "Demo only. Simulated public report of a chemical odor and oil sheen near the Galveston ferry landing. Not a live social post.",
+        evidence: {
+          thumb_url: null,
+          raw: {
+            demo: "true",
+            scenario: DEMO_SCENARIO_ID,
+            hazard: "oil-chemical-release",
+            item_id: "demo-galveston-bay-chemical",
+            author: "@demo_fixture",
+            origin: "fixture",
+            fixture: "true",
+          },
+        },
+        dedupe_key: "demo:" + DEMO_SCENARIO_ID + ":report",
+      },
+    ];
+  }
+
+  async function postAlert(body) {
+    for (let i = 0; i < POST_URLS.length; i += 1) {
+      try {
+        const response = await fetch(POST_URLS[i], {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok) continue;
+        const payload = await response.json();
+        if (payload && payload.alert && payload.alert.id) return payload.alert;
+      } catch (err) {
+        // try the next origin
+      }
+    }
+    return null;
+  }
+
+  let injecting = false;
+
+  async function injectScenario() {
+    if (injecting) return;
+    injecting = true;
+    if (injectBtn) injectBtn.disabled = true;
+    setStatus("Injecting demo scenario…");
+    const bodies = demoAlerts();
+    const posted = [];
+    let onBus = false;
+    for (let i = 0; i < bodies.length; i += 1) {
+      const body = bodies[i];
+      const alert = await postAlert(body);
+      if (alert) {
+        onBus = true;
+        posted.push(alert);
+      } else {
+        posted.push(Object.assign({ id: "local-" + body.dedupe_key }, body));
+      }
+    }
+    posted.forEach(function (alert) {
+      addAlert(alert, { fly: false });
+    });
+    const spill =
+      posted.find(function (alert) {
+        return alert.dedupe_key && alert.dedupe_key.indexOf(":spill") !== -1;
+      }) || posted[0];
+    if (spill) selectAlert(spill.id, { fly: true });
+    setStatus(
+      onBus
+        ? "Demo scenario on the alert bus (" +
+            posted.length +
+            "). Coastal surge plus an oil and chemical release."
+        : "Alert bus offline — demo scenario is on this screen only (" + posted.length + ")."
+    );
+    document.dispatchEvent(
+      new CustomEvent("safety:demo-scenario", {
+        detail: { id: DEMO_SCENARIO_ID, demo: true, onBus: onBus, alerts: posted.slice() },
+      })
+    );
+    injecting = false;
+    if (injectBtn) injectBtn.disabled = false;
   }
 
   function connectStream(index) {
     if (index >= STREAM_URLS.length) {
-      setStatus(state.alerts.length ? state.alerts.length + " alerts (bus offline)" : "Alert bus offline — inject still works");
+      setStatus(state.alerts.length ? state.alerts.length + " alerts (bus offline)" : "Alert bus offline — demo inject still works on this screen");
       return;
     }
     let source;
@@ -283,8 +399,11 @@
   }
 
   if (injectBtn) {
+    injectBtn.textContent = "Inject demo scenario";
+    injectBtn.title =
+      "Demo only. Puts a simulated Galveston coastal surge and ship-channel oil and chemical release on the alert bus.";
     injectBtn.addEventListener("click", function () {
-      addAlert(fakeAlert(), { fly: true });
+      injectScenario();
     });
   }
 

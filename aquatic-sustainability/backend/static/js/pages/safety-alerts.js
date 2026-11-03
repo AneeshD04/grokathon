@@ -222,6 +222,7 @@
     const ts = new Date().toISOString();
     return [
       {
+        id: "demo-galveston-coastal-surge",
         ts: ts,
         source: "nws",
         severity: "warning",
@@ -243,6 +244,7 @@
         dedupe_key: "demo:" + DEMO_SCENARIO_ID + ":coastal",
       },
       {
+        id: "demo-ship-channel-oil-chemical",
         ts: ts,
         source: "news",
         severity: "critical",
@@ -264,6 +266,7 @@
         dedupe_key: "demo:" + DEMO_SCENARIO_ID + ":spill",
       },
       {
+        id: "demo-fixture-public-report",
         ts: ts,
         source: "x",
         severity: "watch",
@@ -325,7 +328,7 @@
         onBus = true;
         posted.push(alert);
       } else {
-        posted.push(Object.assign({ id: "local-" + body.dedupe_key }, body));
+        posted.push(Object.assign({}, body, { id: body.id || "local-" + body.dedupe_key }));
       }
     }
     posted.forEach(function (alert) {

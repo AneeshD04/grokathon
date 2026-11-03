@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flood/Drought Prediction · Aquatic Sustainability</title>
+<link rel="stylesheet" href="/static/css/styles.css" />
+<style>
+  :root {
+    --flood-color: #3b82f6;
+    --flood-light: #60a5fa;
+    --flood-dark: #1e40af;
+    --drought-color: #f59e0b;
+    --drought-light: #fbbf24;
+    --drought-dark: #d97706;
+  }
+
+  .filter-overlay {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    min-width: 280px;
+    backdrop-filter: blur(10px);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  .filter-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .filter-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .filter-label {
+    font-size: 13px;
+    color: var(--muted);
+    min-width: 40px;
+  }
+
+  .filter-slider {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  .filter-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .filter-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .filter-value {
+    min-width: 45px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+    font-size: 13px;
+  }
+
+  .toggle-buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .toggle-btn.flood-active {
+    background: var(--flood-color);
+    border-color: var(--flood-color);
+    color: white;
+  }
+
+  .toggle-btn.drought-active {
+    background: var(--drought-color);
+    border-color: var(--drought-color);
+    color: white;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-in;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .modal {
+    background: var(--card-bg);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 650px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .modal.flood-theme {
+    background: #0f0f0f;
+    border: 2px solid #2a2a2a;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  }
+
+  .modal.flood-theme .modal-header {
+    background: linear-gradient(135deg, #000000, #1a1a1a);
+    border-bottom: 2px solid #2a2a2a;
+  }
+
+  .modal.flood-theme .modal-header h2 {
+    color: #ffffff;
+  }
+
+  .modal.flood-theme .modal-body {
+    background: #0f0f0f;
+  }
+
+  .modal.flood-theme .modal-section h3 {
+    color: #a0a0a0;
+  }
+
+  .modal.flood-theme .modal-info-item {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+  }
+
+  .modal.flood-theme .modal-info-item label {
+    color: #888888;
+  }
+
+  .modal.flood-theme .modal-info-item .value {
+    color: #ffffff;
+  }
+
+  .modal.flood-theme .modal-map-coords {
+    color: #666666;
+  }
+
+  .modal.flood-theme .danger {
+    color: #60a5fa !important;
+  }
+
+  .modal.flood-theme .warning {
+    color: #fbbf24 !important;
+  }
+
+  .modal.flood-theme .highlight {
+    color: #4ade80 !important;
+  }
+
+  .modal.drought-theme {
+    border: 2px solid var(--drought-color);
+    box-shadow: 0 20px 60px rgba(245, 158, 11, 0.3);
+  }
+
+  .modal.drought-theme .modal-header {
+    background: linear-gradient(135deg, var(--drought-dark), var(--drought-color));
+    border-bottom: 2px solid var(--drought-light);
+  }
+
+  .modal.drought-theme .modal-header h2 {
+    color: white;
+  }
+
+  .modal.drought-theme .danger {
+    color: var(--drought-light) !important;
+  }
+
+  .modal-header {
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 22px;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+    opacity: 0.9;
+  }
+
+  .modal-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    opacity: 1;
+  }
+
+  .modal.flood-theme .modal-close {
+    color: #ffffff;
+  }
+
+  .modal.flood-theme .modal-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-section {
+    margin-bottom: 24px;
+  }
+
+  .modal-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .modal-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+  }
+
+  .modal-info-item {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+  }
+
+  .modal-info-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .modal-info-item label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+  }
+
+  .modal-info-item .value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .modal-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .modal-map-coords {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .danger {
+    color: #ef4444 !important;
+  }
+
+  .warning {
+    color: #f59e0b !important;
+  }
+
+  .highlight {
+    color: #22c55e !important;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(50px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .map-search-bar {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    width: 90%;
+    max-width: 400px;
+  }
+
+  .map-search-bar form {
+    display: flex;
+    gap: 8px;
+    background: var(--card-bg);
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .map-search-bar input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .map-search-bar input::placeholder {
+    color: var(--muted);
+  }
+
+  .map-search-bar button {
+    padding: 10px 20px;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div data-navbar-root></div>
+
+<main class="workspace">
+<section class="map-panel">
+<div class="map-search-bar">
+  <form id="searchForm" autocomplete="off">
+    <input type="text" id="searchInput" placeholder="Search location..." />
+    <button type="submit" class="btn">Search</button>
+  </form>
+</div>
+
+<div class="filter-overlay">
+  <div class="filter-title">Probability Filter</div>
+  <div class="filter-row">
+    <span class="filter-label">Min</span>
+    <input type="range" id="minProbability" class="filter-slider" min="0" max="100" value="0" step="5" />
+    <span class="filter-value" id="minProbValue">0%</span>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Max</span>
+    <input type="range" id="maxProbability" class="filter-slider" min="0" max="100" value="100" step="5" />
+    <span class="filter-value" id="maxProbValue">100%</span>
+  </div>
+  <div class="toggle-buttons">
+    <button class="toggle-btn flood-active" id="toggleFlood">💧 Flood</button>
+    <button class="toggle-btn drought-active" id="toggleDrought">🌵 Drought</button>
+  </div>
+</div>
+
+<div id="map"></div>
+</section>
+</main>
+
+<div id="dataModal" class="modal-overlay">
+  <div class="modal" id="modalElement">
+    <div class="modal-header">
+      <h2 id="modalTitle">Zone Details</h2>
+      <button class="modal-close" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body" id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+    // Simple landmask check using coastline approximation
+  function isOnLand(lat, lng) {
+  // Southeast Asia region: roughly 10°S to 30°N, 90°E to 150°E
+  
+  // Quick check: if outside Southeast Asia region, use basic ocean filter
+  if (lng < 90 || lng > 150 || lat < -10 || lat > 30) {
+    // Basic global ocean exclusions for queries outside SE Asia
+    // Pacific Ocean (far from land)
+    if (lat > -60 && lat < 60 && lng > 150 && lng < -100) return false;
+    // Atlantic Ocean (middle)
+    if (lat > 0 && lat < 60 && lng > -50 && lng < -20 && lat > 10 && lat < 40) return false;
+    // Indian Ocean (middle)
+    if (lat > -40 && lat < 0 && lng > 50 && lng < 90) return false;
+    // Arctic Ocean
+    if (lat > 80) return false;
+    // Antarctica
+    if (lat < -60) return false;
+    return true; // Default to land
+  }
+  
+  // === Southeast Asia Detailed Landmask ===
+  
+  // South China Sea (major water body to exclude)
+  if (lat >= 0 && lat <= 23 && lng >= 105 && lng <= 120) {
+    // This is the middle of South China Sea - mostly water
+    // But exclude areas near coastlines
+    if (lat >= 3 && lat <= 20 && lng >= 108 && lng <= 117) {
+      // Deep South China Sea
+      if (lat >= 7 && lat <= 17 && lng >= 110 && lng <= 115) {
+        return false; // Open water
+      }
+    }
+  }
+  
+  // Gulf of Thailand
+  if (lat >= 6 && lat <= 13 && lng >= 99 && lng <= 104) {
+    // Middle of gulf
+    if (lat >= 8 && lat <= 11 && lng >= 100.5 && lng <= 102.5) {
+      return false;
+    }
+  }
+  
+  // Andaman Sea (west of Thailand)
+  if (lat >= 4 && lat <= 14 && lng >= 92 && lng <= 99) {
+    // Deep Andaman Sea
+    if (lat >= 6 && lat <= 12 && lng >= 94 && lng <= 97) {
+      return false;
+    }
+  }
+  
+  // Bay of Bengal (west of Myanmar)
+  if (lat >= 5 && lat <= 22 && lng >= 80 && lng <= 95) {
+    // Deep bay area
+    if (lat >= 8 && lat <= 18 && lng >= 85 && lng <= 92) {
+      return false;
+    }
+  }
+  
+  // Celebes Sea (between Philippines and Indonesia)
+  if (lat >= 0 && lat <= 8 && lng >= 118 && lng <= 126) {
+    // Open Celebes Sea
+    if (lat >= 2 && lat <= 6 && lng >= 120 && lng <= 124) {
+      return false;
+    }
+  }
+  
+  // Sulu Sea (Philippines)
+  if (lat >= 5 && lat <= 10 && lng >= 119 && lng <= 122) {
+    // Middle of Sulu Sea
+    if (lat >= 6.5 && lat <= 8.5 && lng >= 120 && lng <= 121) {
+      return false;
+    }
+  }
+  
+  // Java Sea (between Java and Borneo)
+  if (lat >= -7 && lat <= 0 && lng >= 107 && lng <= 117) {
+    // Open Java Sea
+    if (lat >= -5 && lat <= -2 && lng >= 110 && lng <= 114) {
+      return false;
+    }
+  }
+  
+  // Banda Sea (eastern Indonesia)
+  if (lat >= -8 && lat <= 0 && lng >= 120 && lng <= 132) {
+    // Deep Banda Sea
+    if (lat >= -6 && lat <= -2 && lng >= 124 && lng <= 130) {
+      return false;
+    }
+  }
+  
+  // Arafura Sea (between Indonesia and Australia)
+  if (lat >= -10 && lat <= -5 && lng >= 130 && lng <= 142) {
+    return false; // Mostly open water
+  }
+  
+  // Timor Sea
+  if (lat >= -13 && lat <= -8 && lng >= 123 && lng <= 132) {
+    return false;
+  }
+  
+  // Philippine Sea (east of Philippines)
+  if (lat >= 5 && lat <= 20 && lng >= 125 && lng <= 135) {
+    // Open Philippine Sea
+    if (lat >= 8 && lat <= 18 && lng >= 128 && lng <= 133) {
+      return false;
+    }
+  }
+  
+  // Pacific Ocean (far east of Philippines)
+  if (lng >= 135 && lat >= -10 && lat <= 30) {
+    return false;
+  }
+  
+  // Indian Ocean (southwest of Indonesia)
+  if (lat <= -5 && lng <= 105) {
+    return false;
+  }
+  
+  // Far south Indian Ocean (south of Indonesia)
+  if (lat <= -10 && lng >= 95 && lng <= 125) {
+    return false;
+  }
+  
+  // Default to land for Southeast Asia region
+  // This conservative approach prefers false positives (showing coastal water points)
+  // over false negatives (hiding land points)
+  return true;
+  }
+
+    async function requestFloodRisk(centerLat, centerLon, options = {}) {
+      const { append = false, sourceName = 'Searched location', silent = false, isPreloaded = false } = options;
+      try {
+        const resp = await fetch('/api/flood-risk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat: centerLat, lon: centerLon }),
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          console.error('Error from flood-risk API', data);
+          if (!silent) {
+            alert('Error running flood model: ' + (data.error || 'unknown'));
+          }
+          return;
+        }
+
+        if (!data.result) {
+          console.error('Unexpected flood-risk response shape', data);
+          if (!silent) {
+            alert('Flood model returned no result.');
+          }
+          return;
+        }
+
+        renderFloodPointsOnMap(data.result, { append, sourceName, radius: 35000, isPreloaded });
+      } catch (err) {
+        console.error('Network or parsing error calling /api/flood-risk', err);
+        if (!silent) {
+          alert('Network error running flood model. Check console for details.');
+        }
+      }
+    }
+
+    let map;
+    let modelCircles = [];
+    let activeInfoWindow = null;
+    let floodPolygons = [];
+    let droughtPolygons = [];
+    let showFlood = true;
+    let showDrought = true;
+    let minProb = 0;
+    let maxProb = 100;
+
+    // Southeast Asian cities — the ONLY locations pre-loaded on page load.
+    const southeastAsianCities = [
+      { name: 'Bangkok, Thailand', lat: 13.7563, lon: 100.5018 },
+      { name: 'Ho Chi Minh City, Vietnam', lat: 10.8231, lon: 106.6297 },
+      { name: 'Jakarta, Indonesia', lat: -6.2088, lon: 106.8456 },
+      { name: 'Manila, Philippines', lat: 14.5995, lon: 120.9842 },
+      { name: 'Singapore', lat: 1.3521, lon: 103.8198 },
+      { name: 'Kuala Lumpur, Malaysia', lat: 3.1390, lon: 101.6869 },
+      { name: 'Phnom Penh, Cambodia', lat: 11.5564, lon: 104.9282 },
+      { name: 'Yangon, Myanmar', lat: 16.8409, lon: 96.1735 },
+      { name: 'Hanoi, Vietnam', lat: 21.0285, lon: 105.8542 },
+      { name: 'Chiang Mai, Thailand', lat: 18.7883, lon: 98.9853 },
+    ];
+
+    // Fetch live model data for a single location and add its circles to the map.
+    async function fetchAndRenderLocation(location, loadingEl) {
+      try {
+        const resp = await fetch('/api/flood-risk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat: location.lat, lon: location.lon }),
+        });
+        if (!resp.ok) {
+          console.warn(`[Regional] ${location.name}: HTTP ${resp.status}`);
+          return;
+        }
+        const data = await resp.json();
+        if (data.result) {
+          renderFloodPointsOnMap(data.result, { append: true, sourceName: location.name, radius: 60000, isPreloaded: true });
+          applyFilters();
+        }
+      } catch (err) {
+        console.warn(`[Regional] ${location.name}: ${err.message}`);
+      }
+      // Update progress counter
+      if (loadingEl) {
+        const done = parseInt(loadingEl.dataset.done || '0') + 1;
+        loadingEl.dataset.done = done;
+        const total = southeastAsianCities.length;
+        loadingEl.textContent = `Pre-loading Southeast Asia… ${done}/${total}`;
+        if (done >= total) {
+          setTimeout(() => loadingEl.remove(), 1500);
+        }
+      }
+    }
+
+    // Pre-load Southeast Asian cities only (results cached in Redis across all users).
+    async function loadRegionalFloodRisk() {
+      const banner = document.createElement('div');
+      banner.id = 'regional-loading-banner';
+      banner.dataset.done = '0';
+      banner.textContent = `Pre-loading Southeast Asia… 0/${southeastAsianCities.length}`;
+      Object.assign(banner.style, {
+        position: 'fixed', bottom: '16px', left: '50%', transform: 'translateX(-50%)',
+        background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '8px 18px',
+        borderRadius: '20px', fontSize: '13px', zIndex: '9999', pointerEvents: 'none',
+        transition: 'opacity 0.4s',
+      });
+      document.body.appendChild(banner);
+
+      // Load 3 cities at a time to balance speed vs. server load.
+      const BATCH_SIZE = 3;
+      for (let i = 0; i < southeastAsianCities.length; i += BATCH_SIZE) {
+        const chunk = southeastAsianCities.slice(i, i + BATCH_SIZE);
+        await Promise.allSettled(chunk.map(loc => fetchAndRenderLocation(loc, banner)));
+      }
+
+      banner.textContent = `Southeast Asia loaded!`;
+      if (banner.parentNode) {
+        banner.style.opacity = '0';
+        setTimeout(() => banner.remove(), 2000);
+      }
+      console.log('[PRELOAD] Southeast Asia pre-load complete. Results cached in Redis for all users.');
+    }
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const toRad = (d) => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function findMatchingPreloadedCircle(lat, lng, maxDistanceKm = 40) {
+      for (const circle of modelCircles) {
+        if (!circle._isPreloaded) continue;
+        const center = circle.getCenter();
+        if (!center) continue;
+        const distKm = haversineKm(lat, lng, center.lat(), center.lng());
+        if (distKm <= maxDistanceKm) {
+          return circle;
+        }
+      }
+      return null;
+    }
+
+    function focusExistingPreloadedCircle(lat, lng) {
+      const match = findMatchingPreloadedCircle(lat, lng, 40);
+      if (!match) return false;
+
+      const center = match.getCenter();
+      map.setCenter(center);
+      map.setZoom(8);
+
+      if (activeInfoWindow) {
+        activeInfoWindow.close();
+        activeInfoWindow = null;
+      }
+
+      if (match._infoWindow) {
+        match._infoWindow.setPosition(center);
+        match._infoWindow.open(map);
+        activeInfoWindow = match._infoWindow;
+      }
+
+      return true;
+    }
+
+    function renderFloodPointsOnMap(result, options = {}) {
+      const { append = false, sourceName = 'Searched location', radius = 60000, isPreloaded = false } = options;
+      // Remove existing circles
+      if (!append) {
+        modelCircles.forEach(c => c.setMap(null));
+        modelCircles = [];
+      }
+
+      if (!result || !Array.isArray(result.points)) {
+        console.warn('renderFloodPointsOnMap: no points in result', result);
+        return;
+      }
+
+      // Determine circle center: prefer explicit result.center, fall back to mean of points
+      let circleLat, circleLon;
+      if (result.center && typeof result.center.lat === 'number') {
+        circleLat = result.center.lat;
+        circleLon = result.center.lon;
+      } else if (result.points.length > 0) {
+        circleLat = result.points.reduce((s, p) => s + p.lat, 0) / result.points.length;
+        circleLon = result.points.reduce((s, p) => s + p.lon, 0) / result.points.length;
+      } else {
+        return;
+      }
+
+      // Center map on search
+      if (!append && result.center && typeof result.center.lat === 'number') {
+        map.setCenter({ lat: circleLat, lng: circleLon });
+        map.setZoom(9);
+      }
+
+      // Aggregate probability across all land points
+      const landPoints = result.points.filter(p => isOnLand(p.lat, p.lon));
+      console.log(`[LANDMASK] ${sourceName}: ${result.points.length} → ${landPoints.length} land points`);
+
+      const avgProb = landPoints.length > 0
+        ? landPoints.reduce((s, p) => s + (typeof p.prob === 'number' ? p.prob : 0), 0) / landPoints.length
+        : 0;
+      const maxProb = landPoints.length > 0
+        ? Math.max(...landPoints.map(p => typeof p.prob === 'number' ? p.prob : 0))
+        : 0;
+      const probPct = avgProb * 100;
+
+      const risk =
+        avgProb >= 0.75 ? 'high' :
+        avgProb >= 0.5  ? 'warning' :
+        avgProb >= 0.3  ? 'medium' : 'low';
+
+      const color =
+        risk === 'high'    ? '#ef4444' :
+        risk === 'warning' ? '#fbbf24' :
+        risk === 'medium'  ? '#fb923c' :
+        '#22c55e';
+
+      const riskLabel =
+        risk === 'high'    ? 'High Risk' :
+        risk === 'warning' ? 'Elevated Risk' :
+        risk === 'medium'  ? 'Moderate Risk' :
+        'Low Risk';
+
+      const riskBg =
+        risk === 'high'    ? '#fef2f2' :
+        risk === 'warning' ? '#fffbeb' :
+        risk === 'medium'  ? '#fff7ed' :
+        '#f0fdf4';
+
+      const riskBorder =
+        risk === 'high'    ? '#fca5a5' :
+        risk === 'warning' ? '#fde68a' :
+        risk === 'medium'  ? '#fdba74' :
+        '#86efac';
+
+      const circle = new google.maps.Circle({
+        strokeColor: color,
+        strokeOpacity: 0.85,
+        strokeWeight: 2,
+        fillColor: color,
+        fillOpacity: 0.25,
+        map,
+        center: { lat: circleLat, lng: circleLon },
+        radius: radius,
+      });
+
+      circle._prob = probPct;
+      circle._risk = risk;
+      circle._sourceName = sourceName;
+      circle._isPreloaded = isPreloaded;
+
+      const infoContent = `
+        <div style="
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          min-width: 200px;
+          max-width: 260px;
+          padding: 4px 2px;
+        ">
+          <div style="
+            font-size: 15px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+          ">${sourceName}</div>
+
+          <div style="
+            display: inline-block;
+            background: ${riskBg};
+            border: 1px solid ${riskBorder};
+            color: ${color};
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+          ">${riskLabel}</div>
+
+          <div style="margin-bottom: 6px;">
+            <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Avg Flood Probability</div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="flex: 1; background: #e5e7eb; border-radius: 4px; height: 6px; overflow: hidden;">
+                <div style="width: ${probPct.toFixed(1)}%; background: ${color}; height: 100%; border-radius: 4px;"></div>
+              </div>
+              <span style="font-size: 13px; font-weight: 600; color: #111827; min-width: 38px; text-align: right;">${probPct.toFixed(1)}%</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 6px;">
+            <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Peak Probability</div>
+            <span style="font-size: 13px; font-weight: 500; color: #374151;">${(maxProb * 100).toFixed(1)}%</span>
+          </div>
+
+          <div style="
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #f3f4f6;
+          ">${circleLat.toFixed(3)}°, ${circleLon.toFixed(3)}° &nbsp;·&nbsp; ${landPoints.length} sample points</div>
+        </div>
+      `;
+
+      const info = new google.maps.InfoWindow({ content: infoContent });
+      circle._infoWindow = info;
+
+      circle.addListener('click', (e) => {
+        if (activeInfoWindow) activeInfoWindow.close();
+        info.setPosition(e.latLng);
+        info.open(map);
+        activeInfoWindow = info;
+      });
+
+      modelCircles.push(circle);
+    }
+
+  // Removed hardcoded region-specific flood/drought overlays.
+  // Map overlays should come from model-driven locations instead of fixed polygons.
+  const floodData = [];
+  const droughtData = [];
+
+  function openFloodModal(zone) {
+    const modal = document.getElementById('dataModal');
+    const modalElement = document.getElementById('modalElement');
+    const modalTitle = document.getElementById('modalTitle');
+    const content = document.getElementById('modalContent');
+
+    modalElement.className = 'modal flood-theme';
+    modalTitle.textContent = '💧 Flood Zone Details';
+
+    const severityClass = zone.severity === 'high' ? 'danger' :
+      zone.severity === 'medium' ? 'warning' : 'highlight';
+
+    const centerLat = zone.coordinates.reduce((sum, c) => sum + c.lat, 0) / zone.coordinates.length;
+    const centerLng = zone.coordinates.reduce((sum, c) => sum + c.lng, 0) / zone.coordinates.length;
+
+    content.innerHTML = `
+      <div class="modal-section">
+        <h3>Location</h3>
+        <div class="modal-info-item">
+          <label>Zone Name</label>
+          <div class="value">${zone.name}</div>
+        </div>
+        <div class="modal-info-item">
+          <label>Coordinates (Center)</label>
+          <div class="value">${centerLat.toFixed(4)}°${centerLat >= 0 ? 'N' : 'S'}, ${Math.abs(centerLng).toFixed(4)}°${centerLng >= 0 ? 'E' : 'W'}</div>
+          <div class="modal-map-coords">Lat: ${centerLat.toFixed(4)} | Lng: ${centerLng.toFixed(4)}</div>
+        </div>
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <label>Flood Probability</label>
+            <div class="value ${severityClass}">${zone.probability}%</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Risk Level</label>
+            <div class="value ${severityClass}">${zone.severity.toUpperCase()}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Flood Characteristics</h3>
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <label>Expected Depth</label>
+            <div class="value ${severityClass}">${zone.depth}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Flood Velocity</label>
+            <div class="value">${zone.velocity}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Duration</label>
+            <div class="value">${zone.duration}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Soil Moisture</label>
+            <div class="value">${zone.soilMoisture}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Impact Assessment</h3>
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <label>Precipitation Rate</label>
+            <div class="value">${zone.precipitation}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Elevation Range</label>
+            <div class="value">${zone.elevation}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Population at Risk</label>
+            <div class="value ${severityClass}">${zone.populationRisk}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Infrastructure Impact</label>
+            <div class="value">${zone.infrastructureImpact}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Historical Data</h3>
+        <div class="modal-info-item">
+          <label>Last Incident</label>
+          <div class="value">${new Date(zone.lastIncident).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}</div>
+        </div>
+      </div>
+    `;
+    modal.classList.add('active');
+  }
+
+  function openDroughtModal(zone) {
+    const modal = document.getElementById('dataModal');
+    const modalElement = document.getElementById('modalElement');
+    const modalTitle = document.getElementById('modalTitle');
+    const content = document.getElementById('modalContent');
+
+    modalElement.className = 'modal drought-theme';
+    modalTitle.textContent = '🌵 Drought Zone Details';
+
+    const severityClass = zone.severity === 'high' ? 'danger' :
+      zone.severity === 'medium' ? 'warning' : 'highlight';
+
+    const centerLat = zone.coordinates.reduce((sum, c) => sum + c.lat, 0) / zone.coordinates.length;
+    const centerLng = zone.coordinates.reduce((sum, c) => sum + c.lng, 0) / zone.coordinates.length;
+
+    content.innerHTML = `
+      <div class="modal-section">
+        <h3>Location</h3>
+        <div class="modal-info-item">
+          <label>Zone Name</label>
+          <div class="value">${zone.name}</div>
+        </div>
+        <div class="modal-info-item">
+          <label>Coordinates (Center)</label>
+          <div class="value">${centerLat.toFixed(4)}°${centerLat >= 0 ? 'N' : 'S'}, ${Math.abs(centerLng).toFixed(4)}°${centerLng >= 0 ? 'E' : 'W'}</div>
+          <div class="modal-map-coords">Lat: ${centerLat.toFixed(4)} | Lng: ${centerLng.toFixed(4)}</div>
+        </div>
+        <div class="modal-info-item">
+          <label>Affected Area</label>
+          <div class="value">${zone.affectedArea}</div>
+        </div>
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <label>Drought Risk</label>
+            <div class="value ${severityClass}">${zone.probability}%</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Severity</label>
+            <div class="value ${severityClass}">${zone.severity.toUpperCase()}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Environmental Conditions</h3>
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <label>Temperature Range</label>
+            <div class="value ${severityClass}">${zone.temperature}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Soil Moisture</label>
+            <div class="value ${severityClass}">${zone.soilMoisture}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Precipitation Deficit</label>
+            <div class="value">${zone.precipitation}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Duration</label>
+            <div class="value">${zone.duration}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Impact Status</h3>
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <label>Vegetation Health</label>
+            <div class="value">${zone.vegetation}</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Water Supply Status</label>
+            <div class="value ${severityClass}">${zone.waterSupply}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    modal.classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('dataModal').classList.remove('active');
+  }
+
+  function updateFilters() {
+    minProb = parseInt(document.getElementById('minProbability').value);
+    maxProb = parseInt(document.getElementById('maxProbability').value);
+    document.getElementById('minProbValue').textContent = minProb + '%';
+    document.getElementById('maxProbValue').textContent = maxProb + '%';
+    applyFilters();
+  }
+
+  function applyFilters() {
+    floodPolygons.forEach((polygon, index) => {
+      const zone = floodData[index];
+      const visible = showFlood && zone.probability >= minProb && zone.probability <= maxProb;
+      polygon.setVisible(visible);
+    });
+
+    droughtPolygons.forEach((polygon, index) => {
+      const zone = droughtData[index];
+      const visible = showDrought && zone.probability >= minProb && zone.probability <= maxProb;
+      polygon.setVisible(visible);
+    });
+
+    modelCircles.forEach((circle) => {
+      const visible = showFlood && circle._prob >= minProb && circle._prob <= maxProb;
+      circle.setVisible(visible);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('dataModal');
+    const closeBtn = modal.querySelector('.modal-close');
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    document.getElementById('minProbability').addEventListener('input', updateFilters);
+    document.getElementById('maxProbability').addEventListener('input', updateFilters);
+
+    document.getElementById('toggleFlood').addEventListener('click', function() {
+      showFlood = !showFlood;
+      this.classList.toggle('flood-active');
+      applyFilters();
+    });
+
+    document.getElementById('toggleDrought').addEventListener('click', function() {
+      showDrought = !showDrought;
+      this.classList.toggle('drought-active');
+      applyFilters();
+    });
+  });
+
+    fetch("/api/config/maps-key")
+    .then(res => res.json())
+    .then(data => {
+      const apiKey = data.googleMapsApiKey || "DEMO_KEY";
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
+      script.async = true;
+      document.head.appendChild(script);
+    });
+
+    function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      zoom: 4.5,
+      center: { lat: 8.0, lng: 110.0 },
+      mapTypeId: "terrain",
+    });
+
+    // Close any open popup when clicking the map background
+    map.addListener('click', () => {
+      if (activeInfoWindow) {
+        activeInfoWindow.close();
+        activeInfoWindow = null;
+      }
+    });
+
+    const form = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const geocoder = new google.maps.Geocoder();
+    let autocompletePlace = null;
+
+    if (google.maps.places) {
+      const autocomplete = new google.maps.places.Autocomplete(searchInput, {
+        fields: ['geometry', 'name', 'formatted_address'],
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        autocompletePlace = autocomplete.getPlace();
+        if (!autocompletePlace.geometry || !autocompletePlace.geometry.location) {
+          return;
+        }
+        const loc = autocompletePlace.geometry.location;
+        const lat = loc.lat();
+        const lng = loc.lng();
+
+        map.setCenter(loc);
+        map.setZoom(7);
+      });
+    }
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const query = searchInput.value.trim();
+      if (!query) return;
+
+      if (autocompletePlace && autocompletePlace.geometry && autocompletePlace.geometry.location) {
+        const loc = autocompletePlace.geometry.location;
+        const lat = loc.lat();
+        const lng = loc.lng();
+        if (focusExistingPreloadedCircle(lat, lng)) {
+          return;
+        }
+        map.setCenter(loc);
+        map.setZoom(8);
+        requestFloodRisk(lat, lng, { append: true, sourceName: query });
+        return;
+      }
+
+      geocoder.geocode({ address: query }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+          const loc = results[0].geometry.location;
+          const lat = loc.lat();
+          const lng = loc.lng();
+          if (focusExistingPreloadedCircle(lat, lng)) {
+            return;
+          }
+          map.setCenter(loc);
+          map.setZoom(8);
+          requestFloodRisk(lat, lng, { append: true, sourceName: query });
+        } else {
+          alert('Location not found.');
+        }
+      });
+    });
+
+    loadRegionalFloodRisk();
+
+    floodData.forEach(zone => {
+      const polygon = new google.maps.Polygon({
+        paths: zone.coordinates,
+        strokeColor: '#2563eb',
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: '#3b82f6',
+        fillOpacity: 0.35,
+        map: map,
+      });
+
+      polygon.addListener('click', () => openFloodModal(zone));
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `<div style="padding:8px;">
+                   <strong>${zone.name}</strong><br>
+                   Probability: ${zone.probability}%<br>
+                 </div>`,
+      });
+
+      polygon.addListener('mouseover', (e) => {
+        infoWindow.setPosition(e.latLng);
+        infoWindow.open(map);
+      });
+      polygon.addListener('mouseout', () => infoWindow.close());
+
+      floodPolygons.push(polygon);
+    });
+
+    droughtData.forEach(zone => {
+      const polygon = new google.maps.Polygon({
+        paths: zone.coordinates,
+        strokeColor: '#f59e0b',
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: '#f59e0b',
+        fillOpacity: 0.35,
+        map: map,
+      });
+
+      polygon.addListener('click', () => openDroughtModal(zone));
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `<div style="padding:8px;">
+                   <strong>${zone.name}</strong><br>
+                   Severity: ${zone.severity}/100<br>
+                 </div>`,
+      });
+
+      polygon.addListener('mouseover', (e) => {
+        infoWindow.setPosition(e.latLng);
+        infoWindow.open(map);
+      });
+      polygon.addListener('mouseout', () => infoWindow.close());
+
+      droughtPolygons.push(polygon);
+    });
+  }
+
+</script>
+
+<script src="/static/js/components/navbar.js" defer></script>
+<script src="/static/js/main.js" defer></script>
+<script src="/static/js/pages/floodDrought.js" defer></script>
+</body>
+</html>

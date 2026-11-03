@@ -38,7 +38,7 @@ body:
     attributes:
       label: Paths this will touch
       placeholder: |
-        - backend/...
+        - aquatic-sustainability/backend/...
     validations:
       required: true
   - type: textarea

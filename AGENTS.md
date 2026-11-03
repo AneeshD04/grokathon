@@ -20,12 +20,14 @@ Issue bus: [Issues](https://github.com/AneeshD04/grokathon/issues)
 
 | Human | GitHub | Agent id | Lane |
 | --- | --- | --- | --- |
-| Aneesh | `@AneeshD04` | `agent-aneesh` | Conductor, product, `agents/`, protocol |
-| Devanshu | `@DevanshuShahs` | `agent-devanshu` | Backend / API `backend/` |
-| Kabir | `@buzzkabir` | `agent-kabir` | Frontend `frontend/` |
-| Athithan | **invite pending** — set handle in `TEAM.md` | `agent-athithan` | Grok Bots + demo `bots/` |
+| Aneesh | `@AneeshD04` | `agent-aneesh` | Conductor, product, protocol, `agents/`, `docs/` |
+| Devanshu | `@DevanshuShahs` | `agent-devanshu` | API: `aquatic-sustainability/backend/` (not empty `/backend`) |
+| Kabir | `@buzzkabir` | `agent-kabir` | UI: `aquatic-sustainability/backend/static/` (not empty `/frontend`) |
+| Athithan | **invite pending** — set handle in `TEAM.md` | `agent-athithan` | `bots/` + safety watchers that plug into that Flask app |
 
 Until Athithan is a collaborator, ping `@AneeshD04` on `lane:athithan` issues and say `please forward to Athithan`.
+
+**Product root:** `aquatic-sustainability/` is the BDBI app teammates extend. Additive features only (Safety Agent, cameras, X, gov alerts). Do not rewrite from scratch in `/frontend` or empty `/backend`.
 
 Per-agent briefs live in [`agents/`](agents/). Grok Bot paste-prompts live in [`agents/GROKBOTS.md`](agents/GROKBOTS.md).
 
@@ -117,6 +119,7 @@ please: <the actual ask>
 See `OWNERSHIP.md`. Short version:
 
 - Edit **only** your lane unless the issue is `lane:shared` **and** you were `@mentioned`.
+- Product code is `aquatic-sustainability/`. Claim paths under that tree.
 - `agents/`, `AGENTS.md`, `.cursor/rules/` → Aneesh unless he hands off.
 - Shared contracts (`shared/`) need a `type:decision` or `lane:shared` issue before changing.
 

@@ -3,7 +3,8 @@
 - Human: Aneesh Dantuluri
 - GitHub: `@AneeshD04`
 - Grok Bot name: `Grokathon Conductor` (see `GROKBOTS.md`)
-- Owns: `AGENTS.md`, `OWNERSHIP.md`, `TEAM.md`, `agents/`, `.cursor/`, `.github/`, `scripts/`, product calls
+- Owns: protocol/docs/agent prompts — `AGENTS.md`, `OWNERSHIP.md`, `TEAM.md`, `agents/`, `.cursor/`, `.github/`, `scripts/`, `docs/`, product calls
+- Does **not** implement Flask API or static UI unless a lane owner `HANDOFF`s you
 
 ## You do
 
@@ -16,7 +17,7 @@
 
 ## You never
 
-- Implement `backend/`, `frontend/`, or `bots/` unless the owner `HANDOFF`s you.
+- Implement `aquatic-sustainability/backend/` (Devanshu), `aquatic-sustainability/backend/static/` (Kabir), or `bots/` unless the owner `HANDOFF`s you.
 - Open a second issue for work that already exists.
 
 ## How others ping you

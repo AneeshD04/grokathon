@@ -9,6 +9,7 @@ from flask_cors import cross_origin
 from rq.job import Job
 
 from . import supabase
+from .cameras import list_cameras, proxy_still
 from .tasks import run_flood_job
 
 bp = Blueprint("api", __name__)
@@ -672,3 +673,15 @@ def get_flood_data():
     ]
 
     return jsonify(flood_zones)
+
+
+@bp.route("/cameras", methods=["GET"])
+def get_cameras():
+    """List seeded Houston/coastal cameras inside bbox=minLon,minLat,maxLon,maxLat."""
+    return list_cameras()
+
+
+@bp.route("/cameras/<camera_id>/still", methods=["GET"])
+def get_camera_still(camera_id):
+    """Proxy a catalog still JPEG. No Grok."""
+    return proxy_still(camera_id)

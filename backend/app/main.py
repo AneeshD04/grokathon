@@ -12,8 +12,10 @@ from fastapi.responses import StreamingResponse
 
 from app.models import AlertCreate, AlertPostResponse, Watch, WatchCreate
 from app.store import bus
+from places.router import router as places_router
 
 app = FastAPI(title="Grokathon alert bus", version="0.1.0")
+app.include_router(places_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

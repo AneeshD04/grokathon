@@ -1,0 +1,62 @@
+{
+  "type": "FeatureCollection",
+  "title": "recorded NWS Texas flash flood warning for demo replay — not live",
+  "updated": "2024-05-17T03:12:00+00:00",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.demo.galveston.ffw",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-95.12, 29.18],
+            [-94.62, 29.18],
+            [-94.62, 29.48],
+            [-95.12, 29.48],
+            [-95.12, 29.18]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:2.49.0.1.840.0.demo.galveston.ffw",
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.demo.galveston.ffw",
+        "event": "Flash Flood Warning",
+        "headline": "Flash Flood Warning for Galveston County until 10:15 PM CDT. This is a recorded fixture for the Grokathon demo.",
+        "severity": "Severe",
+        "urgency": "Immediate",
+        "certainty": "Likely",
+        "status": "Actual",
+        "areaDesc": "Galveston, TX",
+        "sent": "2024-05-17T03:12:00+00:00",
+        "effective": "2024-05-17T03:12:00+00:00",
+        "expires": "2024-05-17T05:15:00+00:00",
+        "senderName": "NWS Houston/Galveston TX"
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.demo.elpaso.heat",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-106.7, 31.6],
+            [-106.2, 31.6],
+            [-106.2, 32.0],
+            [-106.7, 32.0],
+            [-106.7, 31.6]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "urn:oid:2.49.0.1.840.0.demo.elpaso.heat",
+        "event": "Excessive Heat Warning",
+        "headline": "Outside the Houston-Galveston bbox — must not publish.",
+        "severity": "Severe",
+        "status": "Actual",
+        "areaDesc": "El Paso, TX"
+      }
+    }
+  ]
+}

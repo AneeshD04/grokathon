@@ -147,10 +147,51 @@
     errorEl.textContent = message;
   }
 
-  function showSuccess(log) {
+  function notifyGeofence() {
+    const sr = window.SafetyRegion;
+    if (sr) {
+      if (sr.county && typeof sr.county === "object" && sr.county.name) return sr.county.name;
+      if (typeof sr.county === "string" && sr.county.trim()) return sr.county.trim();
+    }
+    return "Galveston";
+  }
+
+  function notifySeverity(alert) {
+    const allowed = { info: 1, watch: 1, warning: 1, critical: 1 };
+    const raw = alert && alert.severity ? String(alert.severity).toLowerCase() : "";
+    return allowed[raw] ? raw : "warning";
+  }
+
+  function persistLocalLog(entry) {
+    console.info("[safety-notify sandbox] intended SMS/voice/email (not sent)", {
+      ts: entry.ts,
+      mode: entry.mode,
+      geofence_id: entry.geofence_id,
+      alert_id: entry.alert_id,
+      public_sms: entry.public_sms,
+      ipaws_stub: entry.ipaws_stub,
+      intended: entry.intended,
+      sent: false,
+    });
+    try {
+      const prior = JSON.parse(sessionStorage.getItem("safety_notify_log") || "[]");
+      prior.push(entry);
+      sessionStorage.setItem("safety_notify_log", JSON.stringify(prior));
+    } catch (err) {
+      // ignore quota / private mode
+    }
+  }
+
+  function showSuccess(log, options) {
+    const opts = options || {};
     const emailNote = log.intended.email.length
       ? "Email intended (logged only — no provider)."
       : "No email recipients on the roster.";
+    const statusNote = opts.apiUnreachable
+      ? '<p class="muted" style="margin-top:12px">The notify API was not reached — nothing was sent. Local sandbox log only.</p>'
+      : opts.apiConfirmed
+        ? '<p class="muted" style="margin-top:12px">Server dry-run logged. No SMS was sent — nothing was texted.</p>'
+        : "";
     body.innerHTML =
       '<div class="modal-section">' +
       "<h3>Sandbox result</h3>" +
@@ -172,6 +213,7 @@
       escapeHtml(emailNote) +
       "</div></div>" +
       "</div>" +
+      statusNote +
       '<p class="muted" style="margin-top:12px">No SMS, voice, email, Twilio, Grok, or WEA blast went out. The IPAWS stub is not connected.</p>' +
       "</div>" +
       '<div class="cta-row"><button type="button" class="btn" id="notifyDoneBtn">Close</button></div>';
@@ -214,24 +256,49 @@
       },
     };
 
-    console.info("[safety-notify sandbox] intended SMS/voice/email (not sent)", {
-      ts: log.ts,
-      mode: log.mode,
-      geofence_id: log.geofence_id,
-      alert_id: log.alert_id,
-      public_sms: log.public_sms,
-      ipaws_stub: log.ipaws_stub,
-      intended: log.intended,
-      sent: false,
-    });
-    try {
-      const prior = JSON.parse(sessionStorage.getItem("safety_notify_log") || "[]");
-      prior.push(log);
-      sessionStorage.setItem("safety_notify_log", JSON.stringify(prior));
-    } catch (err) {
-      // ignore quota / private mode
-    }
-    showSuccess(log);
+    const summary = String(log.message || "").slice(0, 4000);
+    const confirmBtn = document.getElementById("notifyConfirmBtn");
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        geofence: notifyGeofence(),
+        severity: notifySeverity(alert),
+        summary: summary,
+        approval_pin: provided,
+      }),
+    })
+      .then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+          if (response.status === 403) {
+            showError("PIN rejected. Nothing was sent.");
+            if (pinInput) {
+              pinInput.value = "";
+              pinInput.focus();
+            }
+            return;
+          }
+          if (!response.ok) {
+            persistLocalLog(log);
+            showSuccess(log, { apiUnreachable: true });
+            return;
+          }
+          log.mode = data.mode || "dry-run-logged";
+          log.sent = false;
+          persistLocalLog(log);
+          showSuccess(log, { apiConfirmed: true });
+        });
+      })
+      .catch(function () {
+        persistLocalLog(log);
+        showSuccess(log, { apiUnreachable: true });
+      })
+      .finally(function () {
+        if (confirmBtn) confirmBtn.disabled = false;
+      });
   }
 
   openBtn.addEventListener("click", openModal);

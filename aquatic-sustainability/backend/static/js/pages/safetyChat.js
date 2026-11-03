@@ -112,6 +112,7 @@
     var inputEl = root.querySelector("[data-safety-chat-input]");
     var sendBtn = root.querySelector("[data-safety-chat-send]");
     var busy = false;
+    var transcript = [];
 
     function scrollLog() {
       logEl.scrollTop = logEl.scrollHeight;
@@ -136,6 +137,17 @@
       inputEl.disabled = on;
     }
 
+    function userMessageContent(text) {
+      var area = regionLabel();
+      var bbox = currentBbox();
+      var context =
+        "Safety watch context — County/geofence: " +
+        area +
+        ". " +
+        bboxSummary(bbox);
+      return context + "\n\n" + String(text || "").trim();
+    }
+
     function sendUserText(text) {
       var trimmed = String(text || "").trim();
       if (!trimmed || busy) return;
@@ -143,7 +155,8 @@
       inputEl.value = "";
       setBusy(true);
 
-      var payload = { text: trimmed, bbox: currentBbox() };
+      transcript.push({ role: "user", content: userMessageContent(trimmed) });
+      var payload = { messages: transcript.slice() };
 
       fetch(CHAT_URL, {
         method: "POST",
@@ -160,17 +173,27 @@
             .then(function (data) {
               if (response.ok) {
                 var reply = replyFromPayload(data);
-                appendMessage(
-                  "officer",
+                var officerText =
                   reply ||
-                    "The chat proxy responded but returned no reply text. Try again or check the server log."
-                );
+                  "The chat proxy responded but returned no reply text. Try again or check the server log.";
+                transcript.push({ role: "assistant", content: officerText });
+                appendMessage("officer", officerText);
                 return;
               }
-              appendMessage("officer", offlineOfficerReply(trimmed));
+              transcript.pop();
+              if (response.status === 503) {
+                appendMessage("officer", offlineOfficerReply(trimmed));
+                return;
+              }
+              var errMsg =
+                data && typeof data.error === "string" && data.error.trim()
+                  ? data.error.trim()
+                  : "Chat request failed (" + response.status + ").";
+              appendMessage("officer", errMsg);
             });
         })
         .catch(function () {
+          transcript.pop();
           appendMessage("officer", offlineOfficerReply(trimmed));
         })
         .finally(function () {

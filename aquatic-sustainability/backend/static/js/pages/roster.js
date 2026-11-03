@@ -1,6 +1,9 @@
 (function safetyRoster() {
   var DISPLAY_CAP = 50;
   var EMPTY_COPY = "no list uploaded — public SMS skipped";
+  var ROSTER_API_DOWN = "Roster API is down. No numbers were contacted.";
+  var BAD_CSV_COPY =
+    "Could not read phone numbers from this CSV. Use a phone/mobile column or one number per line.";
   var PHONE_HEADER = { phone: 1, phones: 1, mobile: 1, cell: 1, number: 1, e164: 1 };
   var LABEL_HEADER = { label: 1, name: 1, contact: 1, resident: 1 };
   var REGION_ID_RE = /^[a-z0-9][a-z0-9.-]{0,63}$/;
@@ -11,6 +14,7 @@
     loading: false,
     error: null,
     status: null,
+    apiDown: false,
   };
   var mountedPanels = [];
 
@@ -293,7 +297,9 @@
     var rows = parseCsvText(text);
     if (rows.length) {
       setStatus(panelRoot, "Preview: " + rows.length + " row(s) ready to upload.");
+      return;
     }
+    setStatus(panelRoot, BAD_CSV_COPY, true);
   }
 
   function readPayloadText(panelRoot) {
@@ -328,12 +334,13 @@
       return Promise.resolve();
     }
     state.loading = true;
+    state.apiDown = false;
     renderAllPanels();
     return fetch(apiUrl("/api/roster/" + encodeURIComponent(regionId)))
       .then(function (res) {
         return res.json().then(function (body) {
           if (!res.ok || !body.ok) {
-            throw new Error((body && body.error) || "HTTP " + res.status);
+            throw new Error(ROSTER_API_DOWN);
           }
           return body;
         });
@@ -341,6 +348,7 @@
       .then(function (body) {
         state.contacts = Array.isArray(body.contacts) ? body.contacts : [];
         state.loading = false;
+        state.apiDown = false;
         if (body.empty || !state.contacts.length) {
           setStatusAll(EMPTY_COPY);
         } else {
@@ -348,10 +356,11 @@
         }
         renderAllPanels();
       })
-      .catch(function (err) {
+      .catch(function () {
         state.loading = false;
         state.contacts = [];
-        setStatusAll(err && err.message ? err.message : "Could not load roster.", true);
+        state.apiDown = true;
+        setStatusAll(ROSTER_API_DOWN, true);
         renderAllPanels();
       });
   }
@@ -369,7 +378,11 @@
     var text = readPayloadText(panelRoot);
     var rows = text ? parseCsvText(text) : [];
     if (!rows.length) {
-      setStatus(panelRoot, "Add pasted CSV/text or choose a file first.", true);
+      setStatus(
+        panelRoot,
+        text ? BAD_CSV_COPY : "Add pasted CSV/text or choose a file first.",
+        true
+      );
       return;
     }
     var path =
@@ -391,9 +404,10 @@
       .then(function (result) {
         var body = result.body;
         if (!result.res.ok || !body.ok) {
-          throw new Error((body && body.error) || "HTTP " + result.res.status);
+          throw new Error(ROSTER_API_DOWN);
         }
         state.contacts = Array.isArray(body.contacts) ? body.contacts : [];
+        state.apiDown = false;
         mountedPanels.forEach(function (panel) {
           var paste = panel.querySelector("[data-roster-paste]");
           if (paste) paste.value = "";
@@ -406,8 +420,10 @@
         );
         renderAllPanels();
       })
-      .catch(function (err) {
-        setStatusAll(err && err.message ? err.message : "Upload failed.", true);
+      .catch(function () {
+        state.apiDown = true;
+        setStatusAll(ROSTER_API_DOWN, true);
+        renderAllPanels();
       });
   }
 
@@ -470,11 +486,21 @@
     }
   }
 
+  function publicContacts() {
+    if (state.apiDown || state.loading || !state.regionId) return [];
+    return state.contacts.slice();
+  }
+
   window.SafetyRoster = {
     attach: attach,
     parseCsvText: parseCsvText,
     resolveRegionId: resolveRegionId,
     EMPTY_COPY: EMPTY_COPY,
+    ROSTER_API_DOWN: ROSTER_API_DOWN,
+    isApiDown: function () {
+      return !!state.apiDown;
+    },
+    getContacts: publicContacts,
   };
 
   ["oem-watch", "region-picker"].forEach(function (id) {

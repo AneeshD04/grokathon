@@ -1,0 +1,48 @@
+[
+  {
+    "source": "camera",
+    "severity": "info",
+    "lat": 29.326965,
+    "lon": -94.772842,
+    "geofence_id": "houston-demo",
+    "title": "Camera all clear",
+    "summary": "Vision: no standing water, debris, or smoke.",
+    "evidence": {
+      "thumb_url": "https://www.houstontranstar.org/snapshots/cctv/180.jpg",
+      "raw": {
+        "vision_class": "all_clear",
+        "vision_backend": "grok",
+        "confidence": 0.9,
+        "uncertain": false,
+        "filename": "180.jpg",
+        "camera_id": "transtar-180",
+        "camera_name": "Galveston Ferry @ Galveston Ferry Landing"
+      }
+    },
+    "dedupe_key": "cam:transtar-180:all_clear",
+    "ts": "2026-11-03T01:34:13.330338Z"
+  },
+  {
+    "source": "camera",
+    "severity": "critical",
+    "lat": 29.326965,
+    "lon": -94.772842,
+    "geofence_id": "houston-demo",
+    "title": "Water over roadway",
+    "summary": "Vision: water covering the roadway. JF13-3 is 1.11 feet above bank.",
+    "evidence": {
+      "thumb_url": "https://www.houstontranstar.org/snapshots/cctv/180.jpg",
+      "raw": {
+        "vision_class": "overtopped_road",
+        "vision_backend": "grok",
+        "confidence": 0.9,
+        "uncertain": false,
+        "filename": "180.jpg",
+        "camera_id": "transtar-180",
+        "camera_name": "Galveston Ferry @ Galveston Ferry Landing"
+      }
+    },
+    "dedupe_key": "cam:transtar-180:water_over_road",
+    "ts": "2026-11-03T01:34:13.330338Z"
+  }
+]

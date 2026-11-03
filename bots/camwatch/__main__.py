@@ -10,7 +10,13 @@ import sys
 import time
 from pathlib import Path
 
-from camwatch.alerts import AlertsPublishError, FileAlertsClient, HttpAlertsClient, fetch_watches
+from camwatch.alerts import (
+    AlertsPublishError,
+    FileAlertsClient,
+    HttpAlertsClient,
+    fetch_watches,
+    resolve_alerts_base_url,
+)
 from camwatch.catalog import load_city
 from camwatch.config import load_config
 from camwatch.flood import publish_new_flood_alerts
@@ -42,9 +48,15 @@ def main(argv: list[str] | None = None) -> int:
         help="Classify from the filename or sidecar. Do not call xAI.",
     )
     parser.add_argument(
+        "--vision",
+        choices=("fast", "grok", "fixture"),
+        default=(os.environ.get("CAMWATCH_VISION") or "fast").strip().lower() or "fast",
+        help="fast = JPEG color heuristic (default, no Grok). grok = one classify then exit.",
+    )
+    parser.add_argument(
         "--once",
         action="store_true",
-        help="Sample one frame and exit (this is the default)",
+        help="One pass then exit (this is the default). Not a loop.",
     )
     parser.add_argument(
         "--loop",
@@ -55,11 +67,12 @@ def main(argv: list[str] | None = None) -> int:
         "--sink",
         choices=("http", "file"),
         default=os.environ.get("CAMWATCH_SINK", "http"),
-        help="http posts to the alert bus; file writes JSONL when the API is down",
+        help="http posts to the Flask alert bus; file writes JSONL when the API is down",
     )
     parser.add_argument(
         "--alerts-url",
-        default=os.environ.get("ALERTS_BASE_URL", "http://127.0.0.1:8000"),
+        default=os.environ.get("ALERTS_BASE_URL"),
+        help="Alert bus base URL. Default probes Flask :5001/:5000, then stub :8000.",
     )
     parser.add_argument(
         "--out",
@@ -83,6 +96,11 @@ def main(argv: list[str] | None = None) -> int:
         "--ignore-watches",
         action="store_true",
         help="Do not GET /api/watches; sample the local camera file",
+    )
+    parser.add_argument(
+        "--honor-watches",
+        action="store_true",
+        help="GET Flask /api/watches even on --once. Default one-pass ignores model-only seed watches.",
     )
     parser.add_argument(
         "--card",
@@ -127,19 +145,27 @@ def main(argv: list[str] | None = None) -> int:
         log.error("%s", exc)
         return 2
     cameras = _apply_inbox(cameras, args.inbox)
-    classifier = build_classifier(fixture=args.fixture)
+    vision = "fixture" if args.fixture else args.vision
+    classifier = build_classifier(fixture=args.fixture, vision=vision)
     bus_token = os.environ.get("ALERT_BUS_TOKEN", "").strip()
+    alerts_url = args.alerts_url
+    if args.sink == "http":
+        alerts_url = resolve_alerts_base_url(args.alerts_url)
+        log.info("alert bus %s", alerts_url)
     publisher = (
         FileAlertsClient(args.out)
         if args.sink == "file"
-        else HttpAlertsClient(args.alerts_url, token=bus_token)
+        else HttpAlertsClient(alerts_url, token=bus_token)
     )
     state = WatchState()
+    ignore_watches = args.ignore_watches or (not args.loop and not args.honor_watches)
+    # FAST one-pass: sample the catalog (cap 8). Grok: one classify then exit.
+    max_frames = 1 if vision == "grok" else max_cameras
 
     def tick() -> int:
         watches = None
-        if args.sink == "http" and not args.ignore_watches:
-            watches = fetch_watches(args.alerts_url, token=bus_token)
+        if args.sink == "http" and not ignore_watches:
+            watches = fetch_watches(alerts_url, token=bus_token)
         alerts = run_once(
             cameras,
             classifier=classifier,
@@ -147,6 +173,7 @@ def main(argv: list[str] | None = None) -> int:
             state=state,
             watches=watches,
             max_cameras=max_cameras,
+            max_frames=max_frames,
         )
         if args.cameras is None and args.city == "houston":
             alerts.extend(publish_new_flood_alerts(publisher, state))

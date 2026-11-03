@@ -1,18 +1,28 @@
 """Publish alerts to POST /api/alerts, or to a local JSONL file when the API is down.
 
-The file sink is the seam for tests and for running when the sidecar is down.
-The bus itself is ``backend/`` (issue #11, on main). Both sinks speak the
-same alert object. ``thumb_url`` is either null or an http(s) URL.
+Prefer the Flask bus on ``aquatic-sustainability`` (``python run.py``,
+port 5001). The repo-root stub ``:8000`` is only the fallback when Flask
+``/api/alerts`` is not reachable. Both sinks speak the same alert object.
+``thumb_url`` is either null or an http(s) URL.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import urllib.error
 import urllib.request
 from pathlib import Path
 
 from camwatch.model import iso_now, new_ulid
+
+logger = logging.getLogger("camwatch")
+
+FLASK_ALERT_CANDIDATES = (
+    "http://127.0.0.1:5001",
+    "http://127.0.0.1:5000",
+)
+STUB_ALERTS_URL = "http://127.0.0.1:8000"
 
 
 class AlertsPublishError(Exception):
@@ -89,6 +99,57 @@ class FileAlertsClient:
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, separators=(",", ":")) + "\n")
         return record
+
+
+def _normalize_base(url: str) -> str:
+    return url.strip().rstrip("/")
+
+
+def flask_alerts_up(
+    base_url: str,
+    timeout: float = 0.6,
+    opener=urllib.request.urlopen,
+) -> bool:
+    """True when GET /api/alerts on this base returns JSON (Flask ModelWatch bus)."""
+    request = urllib.request.Request(
+        f"{_normalize_base(base_url)}/api/alerts",
+        headers={"Accept": "application/json"},
+        method="GET",
+    )
+    try:
+        with opener(request, timeout=timeout) as response:
+            status = getattr(response, "status", None)
+            if status is None:
+                status = getattr(response, "code", 200)
+            if int(status) >= 400:
+                return False
+            body = response.read(4096)
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        return False
+    text = body.lstrip()
+    return text.startswith(b"[") or text.startswith(b"{")
+
+
+def resolve_alerts_base_url(
+    explicit: str | None = None,
+    *,
+    probe=flask_alerts_up,
+) -> str:
+    """Use Flask :5001/:5000 when that bus exists; otherwise the explicit URL or stub.
+
+    A custom ``--alerts-url`` (tests, Cloud Run) is kept. The stub ``:8000``
+    loses to a live Flask bus so a demo does not POST the empty sidecar.
+    """
+    chosen = _normalize_base(explicit) if (explicit or "").strip() else None
+    flask_set = set(FLASK_ALERT_CANDIDATES)
+    if chosen and chosen not in flask_set and chosen != STUB_ALERTS_URL:
+        return chosen
+    for candidate in FLASK_ALERT_CANDIDATES:
+        if probe(candidate):
+            if chosen and chosen != candidate:
+                logger.info("Flask /api/alerts is up at %s; not using %s", candidate, chosen)
+            return candidate
+    return chosen or STUB_ALERTS_URL
 
 
 def fetch_watches(

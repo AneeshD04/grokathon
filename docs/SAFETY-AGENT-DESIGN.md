@@ -285,10 +285,16 @@ System prompt: you are an **incident officer for county OEM / local government**
 
 ## UI (minimal)
 
+**Binding (conductor, [#7](https://github.com/AneeshD04/grokathon/issues/7)):** ship on the **existing** Flask chrome. Same navbar, same `styles.css`, same flood-drought map. **No second chrome.**
+
+- Edit `aquatic-sustainability/backend/static/` only: `index.html`, `pages/flood-drought.html`, `js/map.js` / `js/mapInit.js` / `js/pages/floodDrought.js`, navbar, `css/styles.css`.
+- Region mark, camera pins, alerts, and PIN notify live **on that map** ([#14](https://github.com/AneeshD04/grokathon/issues/14) [#15](https://github.com/AneeshD04/grokathon/issues/15) [#16](https://github.com/AneeshD04/grokathon/issues/16) [#25](https://github.com/AneeshD04/grokathon/issues/25) [#13](https://github.com/AneeshD04/grokathon/issues/13)).
+- **Do not** add `frontend/safety/*`, `pages/safety.html`, a `/safety` route, a drawer-only SPA, or a sidecar UI. Overlays must reuse existing card / `filter-overlay` patterns.
+
 - Reuse flood-drought map + **draw rectangle / pick county** ([#14](https://github.com/AneeshD04/grokathon/issues/14)). Marking a region **subscribes ModelWatch**.
 - Camera layer: pins, click = live still/HLS ([#15](https://github.com/AneeshD04/grokathon/issues/15)).
 - Business layer: distinct pins from Places; on a model alert, highlight **impacted** types ([#25](https://github.com/AneeshD04/grokathon/issues/25)).
-- Right drawer: Safety Agent chat + alert feed ([#16](https://github.com/AneeshD04/grokathon/issues/16)). Model alerts show `max_prob` / dummy label, not a camera thumb.
+- Overlay (not a new shell): Safety Agent chat + alert feed on flood-drought ([#16](https://github.com/AneeshD04/grokathon/issues/16)). Model alerts show `max_prob` / dummy label, not a camera thumb.
 - Alert → fly-to + evidence (prob, endpoint, synthetic flag).
 - **Notify impacted businesses** → confirm modal → PIN → success-as-if-sent or reject. Same gate as **Send alerts**. Include **Submit to IPAWS/WEA** stub (non-sending). Opt-in resident count or “no list uploaded — public SMS skipped.”
 - On-demand **Refresh models** control that calls `poll-models`.
@@ -326,12 +332,12 @@ Wireless Emergency Alerts (WEA) are **geo-targeted cell broadcasts**, not SMS fr
 
 - `@AneeshD04` — product, this doc, contracts in `shared/`, agent prompt + `poll_models` ([#26](https://github.com/AneeshD04/grokathon/issues/26), [#8](https://github.com/AneeshD04/grokathon/issues/8), [#34](https://github.com/AneeshD04/grokathon/issues/34))
 - `@DevanshuShahs` — ModelWatch poller ([#35](https://github.com/AneeshD04/grokathon/issues/35)), alert bus ([#11](https://github.com/AneeshD04/grokathon/issues/11)), Places nearby ([#24](https://github.com/AneeshD04/grokathon/issues/24)), PIN-gated dry-run notify ([#13](https://github.com/AneeshD04/grokathon/issues/13)), Grok chat proxy ([#12](https://github.com/AneeshD04/grokathon/issues/12)) in `aquatic-sustainability/backend` **or** `backend/` sidecar (HANDOFF, don’t dual-write)
-- `@buzzkabir` — `/safety` region subscribe, impacted-businesses list, **Notify impacted businesses** modal + PIN ([#16](https://github.com/AneeshD04/grokathon/issues/16), [#25](https://github.com/AneeshD04/grokathon/issues/25), [#14](https://github.com/AneeshD04/grokathon/issues/14))
+- `@buzzkabir` — region subscribe, pins, alert overlay, **Notify impacted businesses** modal + PIN **on the existing flood-drought map** ([#16](https://github.com/AneeshD04/grokathon/issues/16), [#25](https://github.com/AneeshD04/grokathon/issues/25), [#14](https://github.com/AneeshD04/grokathon/issues/14)). No `/safety` chrome.
 - Athithan via `@AneeshD04` — Grok Bot watchers + camera worker in `bots/`
 
 ## Demo script (judges)
 
-1. Show **old** BDBI flood/drought page (predictive DualCNN-LSTM click). Switch to `/safety`. Say: **county OEM / local government console**.
+1. Stay on the **existing** Flood/Drought page (same navbar / `styles.css`). DualCNN-LSTM click still works; OEM then marks a county on **that** map. Say: **county OEM / local government console**. Do **not** switch to a `/safety` site.
 2. Draw Galveston County. ModelWatch subscribes. Camera pins + business pins appear; click one of each.
 3. Chat: “Watch this area.” Sub-agents go live. Hit **Refresh models** (or wait for the interval) so `POST /api/flood-risk` runs for the centroid.
 4. If max `prob >= 0.5` (or inject a fixture / NWS / flooded-road frame): UI shows `Alert{source:model}` with flood **probability** and the impacted-businesses list. Grok drafts copy that cites DualCNN-LSTM + NASA GPM+SMAP, **not** a lab result.

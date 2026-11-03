@@ -195,15 +195,17 @@
     if (!cameras.length || document.getElementById("camera-demo-strip")) return;
     const bar = document.createElement("div");
     bar.id = "camera-demo-strip";
-    bar.style.cssText = "position:fixed;z-index:50;left:12px;right:12px;bottom:12px;display:flex;gap:8px;overflow:auto;padding:8px;background:rgba(15,23,42,.94);border-radius:12px;border:1px solid rgba(255,255,255,.12);";
-    cameras.slice(0, 6).forEach(function (cam) {
+    const host = document.querySelector(".filter-overlay");
+    if (!host) return;
+    bar.style.cssText = "margin-top:12px;display:flex;gap:8px;overflow:auto;padding-bottom:4px;";
+    cameras.slice(0, 4).forEach(function (cam) {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.style.cssText = "flex:0 0 180px;padding:0;border:0;border-radius:8px;overflow:hidden;background:#0f172a;color:#e7eef6;text-align:left;cursor:pointer;";
+      btn.style.cssText = "flex:0 0 132px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:8px;overflow:hidden;background:#0f172a;color:#e7eef6;text-align:left;cursor:pointer;";
       const img = document.createElement("img");
       img.alt = cam.name;
       img.src = cam.still_url;
-      img.style.cssText = "display:block;width:100%;height:90px;object-fit:cover;background:#111;";
+      img.style.cssText = "display:block;width:100%;height:72px;object-fit:cover;background:#111;";
       const cap = document.createElement("div");
       cap.textContent = cam.name;
       cap.style.cssText = "padding:6px 8px;font:12px/1.3 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
@@ -211,7 +213,7 @@
       btn.addEventListener("click", function () { showFeed(cam); });
       bar.appendChild(btn);
     });
-    document.body.appendChild(bar);
+    host.appendChild(bar);
   }
   function showFeed(cam) {
     const old = document.getElementById("camera-demo-feed");

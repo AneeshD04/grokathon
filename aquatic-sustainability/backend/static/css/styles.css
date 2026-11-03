@@ -121,12 +121,14 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 10px 16px;
     border-bottom: 1px solid var(--border);
     background: var(--panel);
     position: sticky;
     top: 0;
-    z-index: 20;
+    z-index: 40;
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 .brand {
@@ -149,13 +151,29 @@ html:not(.light) .logo {
 .brand-title {
     font-weight: 700;
     letter-spacing: .2px;
+    white-space: nowrap;
+}
+.top-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex: 1 1 240px;
+    min-width: 0;
+    max-width: 100%;
 }
 .top-nav a {
     color: var(--text);
     text-decoration: none;
-    margin: 0 10px;
+    margin: 0;
     padding: 6px 10px;
     border-radius: 8px;
+    white-space: nowrap;
+}
+#logoutBtn {
+    float: none !important;
+    margin-left: 4px !important;
 }
 .top-nav a.active, .top-nav a:hover {
     background: var(--panel-2);

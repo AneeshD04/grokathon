@@ -2,13 +2,29 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class NearbyRequest(BaseModel):
     bbox: list[float] | None = None
     polygon: list[list[float]] | None = None
     limit: int = Field(default=20, ge=1, le=20)
+    types: list[str] | None = None
+
+    @field_validator("types")
+    @classmethod
+    def types_are_short(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        if not value or len(value) > 10:
+            raise ValueError("types must contain 1 to 10 entries")
+        cleaned = []
+        for item in value:
+            text = item.strip()
+            if not text or len(text) > 40:
+                raise ValueError("invalid place type")
+            cleaned.append(text)
+        return cleaned
 
     @model_validator(mode="after")
     def require_area(self) -> "NearbyRequest":

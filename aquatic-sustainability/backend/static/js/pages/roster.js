@@ -1,9 +1,23 @@
 (function safetyRoster() {
   var DISPLAY_CAP = 50;
   var EMPTY_COPY = "no list uploaded — public SMS skipped";
+  var ROSTER_API_DOWN = "Roster API is down. No numbers were contacted.";
+  var BAD_CSV_COPY =
+    "Could not read phone numbers from this CSV. Use a phone/mobile column or one number per line.";
   var PHONE_HEADER = { phone: 1, phones: 1, mobile: 1, cell: 1, number: 1, e164: 1 };
   var LABEL_HEADER = { label: 1, name: 1, contact: 1, resident: 1 };
   var REGION_ID_RE = /^[a-z0-9][a-z0-9.-]{0,63}$/;
+
+  var ERROR_COPY = {
+    invalid_phone: "That phone number does not look valid. Use 10 digits, e.g. 713 555 0142.",
+    emergency_number: "Emergency numbers like 911 cannot go on the list.",
+    invalid_email: "That email address does not look valid.",
+    invalid_contacts: "Nothing usable to add. Check the numbers and try again.",
+    invalid_region_id: "Pick Galveston or Harris County first.",
+    duplicate_phone: "That number is already on the list.",
+    contact_not_found: "That contact was already removed. Refresh the list.",
+  };
+  var loadSeq = 0;
 
   var state = {
     regionId: null,
@@ -11,6 +25,7 @@
     loading: false,
     error: null,
     status: null,
+    apiDown: false,
   };
   var mountedPanels = [];
 
@@ -165,7 +180,18 @@
       '<div style="font-weight:600;margin-bottom:6px;">Opt-in resident roster</div>' +
       '<div data-roster-region style="color:var(--muted,#94a3b8);margin-bottom:8px;"></div>' +
       '<div data-roster-empty style="color:var(--muted,#94a3b8);margin-bottom:8px;"></div>' +
-      '<label style="display:block;color:var(--muted,#94a3b8);margin-bottom:4px;">Paste CSV or one phone per line (optional label after comma)</label>' +
+      '<div style="font-weight:500;margin-bottom:4px;">Add one contact</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">' +
+      '<input type="tel" data-roster-add-phone placeholder="Phone, e.g. 713 555 0142" autocomplete="off" ' +
+      'style="flex:1 1 140px;min-width:0;box-sizing:border-box;background:rgba(15,23,42,0.6);color:var(--text,#e2e8f0);' +
+      'border:1px solid rgba(148,163,184,0.35);border-radius:6px;padding:6px 8px;" />' +
+      '<input type="text" data-roster-add-label placeholder="Name (optional)" autocomplete="off" ' +
+      'style="flex:1 1 120px;min-width:0;box-sizing:border-box;background:rgba(15,23,42,0.6);color:var(--text,#e2e8f0);' +
+      'border:1px solid rgba(148,163,184,0.35);border-radius:6px;padding:6px 8px;" />' +
+      '<button type="button" data-roster-add style="padding:6px 10px;border-radius:6px;border:0;' +
+      'background:#2563eb;color:#fff;cursor:pointer;">Add contact</button>' +
+      "</div>" +
+      '<label style="display:block;color:var(--muted,#94a3b8);margin-bottom:4px;">Or paste CSV or one phone per line (optional label after comma)</label>' +
       '<textarea data-roster-paste rows="4" style="width:100%;box-sizing:border-box;margin-bottom:8px;' +
       "background:rgba(15,23,42,0.6);color:var(--text,#e2e8f0);border:1px solid rgba(148,163,184,0.35);" +
       'border-radius:6px;padding:8px;resize:vertical;"></textarea>' +
@@ -190,6 +216,17 @@
       uploadCsv(panel, "replace");
     });
     panel.querySelector("[data-roster-refresh]").addEventListener("click", refreshList);
+    panel.querySelector("[data-roster-add]").addEventListener("click", function () {
+      addContact(panel);
+    });
+    ["[data-roster-add-phone]", "[data-roster-add-label]"].forEach(function (sel) {
+      panel.querySelector(sel).addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          addContact(panel);
+        }
+      });
+    });
     panel.querySelector("[data-roster-file]").addEventListener("change", function (ev) {
       onFileSelected(panel, ev);
     });
@@ -222,12 +259,92 @@
   function renderRegionLine(panelRoot) {
     if (!panelRoot) return;
     var el = panelRoot.querySelector("[data-roster-region]");
+    var enabled = !!state.regionId;
+    ["[data-roster-add-phone]", "[data-roster-add-label]", "[data-roster-add]", "[data-roster-import]", "[data-roster-replace]"].forEach(
+      function (sel) {
+        var node = panelRoot.querySelector(sel);
+        if (!node) return;
+        node.disabled = !enabled;
+        node.style.opacity = enabled ? "" : "0.5";
+        node.style.cursor = enabled ? "pointer" : "not-allowed";
+      }
+    );
     if (!state.regionId) {
       el.textContent =
         "No county region selected. Choose Galveston or Harris to manage the opt-in phone list (drawn boxes do not get a roster id).";
       return;
     }
-    el.textContent = "Region: " + state.regionId;
+    var county = window.oemCountyById && window.oemCountyById(state.regionId);
+    el.textContent = "Region: " + (county ? county.name : state.regionId);
+  }
+
+  // Resolve with the parsed JSON body, or reject with a user-facing message.
+  // Network failures and 5xx mean the API is down; 4xx carries a real reason.
+  function api(path, options) {
+    return fetch(apiUrl(path), options).then(
+      function (res) {
+        return res.json().then(
+          function (body) {
+            if (res.ok && body && body.ok) return body;
+            var code = body && body.error;
+            var err = new Error(
+              res.status >= 500 ? ROSTER_API_DOWN : ERROR_COPY[code] || "Request failed (" + res.status + ")."
+            );
+            err.apiDown = res.status >= 500;
+            err.code = code;
+            throw err;
+          },
+          function () {
+            var err = new Error(ROSTER_API_DOWN);
+            err.apiDown = true;
+            throw err;
+          }
+        );
+      },
+      function () {
+        var err = new Error(ROSTER_API_DOWN);
+        err.apiDown = true;
+        throw err;
+      }
+    );
+  }
+
+  function addContact(panelRoot) {
+    if (!state.regionId) {
+      setStatusAll("Select Galveston or Harris before adding a contact.", true);
+      return;
+    }
+    var phoneEl = panelRoot.querySelector("[data-roster-add-phone]");
+    var labelEl = panelRoot.querySelector("[data-roster-add-label]");
+    var phone = phoneEl.value.trim();
+    if (!phone) {
+      setStatus(panelRoot, "Enter a phone number first.", true);
+      phoneEl.focus();
+      return;
+    }
+    var label = labelEl.value.trim();
+    setStatusAll("Adding…");
+    api("/api/roster/" + encodeURIComponent(state.regionId) + "/contacts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: phone, label: label || null }),
+    })
+      .then(function (body) {
+        state.contacts = Array.isArray(body.contacts) ? body.contacts : [];
+        state.apiDown = false;
+        mountedPanels.forEach(function (panel) {
+          panel.querySelector("[data-roster-add-phone]").value = "";
+          panel.querySelector("[data-roster-add-label]").value = "";
+        });
+        setStatusAll("Added " + ((body.contact && body.contact.phone) || phone) + ".");
+        renderAllPanels();
+        phoneEl.focus();
+      })
+      .catch(function (err) {
+        if (err.apiDown) state.apiDown = true;
+        setStatusAll(err.message, true);
+        renderAllPanels();
+      });
   }
 
   function renderEmptyLine(panelRoot) {
@@ -293,7 +410,9 @@
     var rows = parseCsvText(text);
     if (rows.length) {
       setStatus(panelRoot, "Preview: " + rows.length + " row(s) ready to upload.");
+      return;
     }
+    setStatus(panelRoot, BAD_CSV_COPY, true);
   }
 
   function readPayloadText(panelRoot) {
@@ -327,31 +446,25 @@
       renderAllPanels();
       return Promise.resolve();
     }
+    var seq = ++loadSeq;
     state.loading = true;
+    state.apiDown = false;
     renderAllPanels();
-    return fetch(apiUrl("/api/roster/" + encodeURIComponent(regionId)))
-      .then(function (res) {
-        return res.json().then(function (body) {
-          if (!res.ok || !body.ok) {
-            throw new Error((body && body.error) || "HTTP " + res.status);
-          }
-          return body;
-        });
-      })
+    return api("/api/roster/" + encodeURIComponent(regionId))
       .then(function (body) {
+        if (seq !== loadSeq) return;
         state.contacts = Array.isArray(body.contacts) ? body.contacts : [];
         state.loading = false;
-        if (body.empty || !state.contacts.length) {
-          setStatusAll(EMPTY_COPY);
-        } else {
-          setStatusAll("");
-        }
+        state.apiDown = false;
+        setStatusAll(state.contacts.length ? "" : EMPTY_COPY);
         renderAllPanels();
       })
-      .catch(function (err) {
+      .catch(function () {
+        if (seq !== loadSeq) return;
         state.loading = false;
         state.contacts = [];
-        setStatusAll(err && err.message ? err.message : "Could not load roster.", true);
+        state.apiDown = true;
+        setStatusAll(ROSTER_API_DOWN, true);
         renderAllPanels();
       });
   }
@@ -369,7 +482,11 @@
     var text = readPayloadText(panelRoot);
     var rows = text ? parseCsvText(text) : [];
     if (!rows.length) {
-      setStatus(panelRoot, "Add pasted CSV/text or choose a file first.", true);
+      setStatus(
+        panelRoot,
+        text ? BAD_CSV_COPY : "Add pasted CSV/text or choose a file first.",
+        true
+      );
       return;
     }
     var path =
@@ -378,71 +495,47 @@
         : "/api/roster/" + encodeURIComponent(state.regionId) + "/import";
     var method = mode === "replace" ? "PUT" : "POST";
     setStatusAll("Uploading…");
-    fetch(apiUrl(path), {
+    api(path, {
       method: method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ csv: text }),
     })
-      .then(function (res) {
-        return res.json().then(function (body) {
-          return { res: res, body: body };
-        });
-      })
-      .then(function (result) {
-        var body = result.body;
-        if (!result.res.ok || !body.ok) {
-          throw new Error((body && body.error) || "HTTP " + result.res.status);
-        }
+      .then(function (body) {
         state.contacts = Array.isArray(body.contacts) ? body.contacts : [];
+        state.apiDown = false;
         mountedPanels.forEach(function (panel) {
           var paste = panel.querySelector("[data-roster-paste]");
           if (paste) paste.value = "";
         });
         setStatusAll(
           (mode === "replace" ? "List replaced" : "Imported") +
-            " — " +
+            " - " +
             state.contacts.length +
             " contact(s)."
         );
         renderAllPanels();
       })
       .catch(function (err) {
-        setStatusAll(err && err.message ? err.message : "Upload failed.", true);
+        if (err.apiDown) state.apiDown = true;
+        setStatusAll(err.message, true);
+        renderAllPanels();
       });
   }
 
   function deleteContact(panelRoot, contactId) {
     if (!state.regionId || !contactId) return;
     setStatusAll("Removing…");
-    fetch(
-      apiUrl(
-        "/api/roster/" +
-          encodeURIComponent(state.regionId) +
-          "/contacts/" +
-          encodeURIComponent(contactId)
-      ),
+    api(
+      "/api/roster/" + encodeURIComponent(state.regionId) + "/contacts/" + encodeURIComponent(contactId),
       { method: "DELETE" }
     )
-      .then(function (res) {
-        return res.json().then(function (body) {
-          return { res: res, body: body };
-        });
-      })
-      .then(function (result) {
-        var body = result.body;
-        if (!result.res.ok || !body.ok) {
-          throw new Error((body && body.error) || "HTTP " + result.res.status);
-        }
+      .then(function (body) {
         state.contacts = Array.isArray(body.contacts) ? body.contacts : [];
-        if (!state.contacts.length) {
-          setStatusAll(EMPTY_COPY);
-        } else {
-          setStatusAll("Contact removed.");
-        }
+        setStatusAll(state.contacts.length ? "Contact removed." : EMPTY_COPY);
         renderAllPanels();
       })
       .catch(function (err) {
-        setStatusAll(err && err.message ? err.message : "Delete failed.", true);
+        setStatusAll(err.message || "Delete failed.", true);
       });
   }
 
@@ -470,11 +563,21 @@
     }
   }
 
+  function publicContacts() {
+    if (state.apiDown || state.loading || !state.regionId) return [];
+    return state.contacts.slice();
+  }
+
   window.SafetyRoster = {
     attach: attach,
     parseCsvText: parseCsvText,
     resolveRegionId: resolveRegionId,
     EMPTY_COPY: EMPTY_COPY,
+    ROSTER_API_DOWN: ROSTER_API_DOWN,
+    isApiDown: function () {
+      return !!state.apiDown;
+    },
+    getContacts: publicContacts,
   };
 
   ["oem-watch", "region-picker"].forEach(function (id) {

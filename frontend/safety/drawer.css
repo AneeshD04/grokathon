@@ -1,0 +1,128 @@
+.safety-drawer {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 600;
+  width: 340px;
+  overflow: auto;
+  padding: 14px 14px 18px;
+  background: rgba(12, 18, 32, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.drawer-head h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #7dd3fc;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.drawer-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.drawer-section h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.hint, #brief-empty {
+  margin: 0 0 8px;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+#news-list, #alert-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#news-list li {
+  margin: 0 0 10px;
+  display: grid;
+  gap: 2px;
+}
+
+#news-list span, #flood-line, #route-line { color: #cbd5e1; font-size: 13px; }
+
+#flood-line, #route-line { margin: 0 0 8px; }
+
+#chat-form button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 650;
+}
+
+.alert-row {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 0 0 6px;
+  background: rgba(251, 146, 60, 0.12);
+  color: #e7eef6;
+  display: grid;
+  gap: 2px;
+}
+
+.alert-row span, .alert-empty { color: #cbd5e1; font-size: 12px; }
+
+#evidence { margin: 8px 0 0; }
+
+#evidence img {
+  width: 100%;
+  border-radius: 8px;
+  background: #102033;
+}
+
+#evidence figcaption { color: #cbd5e1; font-size: 12px; margin-top: 4px; }
+
+#transcript {
+  max-height: 160px;
+  overflow: auto;
+  margin-bottom: 8px;
+}
+
+.chat-line { margin: 0 0 8px; font-size: 13px; }
+.chat-line.user { color: #e2e8f0; }
+.chat-line.officer { color: #bae6fd; }
+
+#chat-form { display: flex; gap: 6px; }
+
+#chat-text {
+  flex: 1;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #0b1220;
+  color: #e7eef6;
+  padding: 8px;
+  font: inherit;
+}
+
+@media (max-width: 900px) {
+  .safety-drawer {
+    width: min(340px, 92vw);
+    top: auto;
+    height: 42vh;
+  }
+}

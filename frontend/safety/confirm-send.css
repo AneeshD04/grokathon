@@ -1,0 +1,162 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: "Segoe UI", sans-serif;
+  color: #0f172a;
+  background: #0b1220;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+.oem-panel {
+  position: absolute;
+  z-index: 500;
+  top: 12px;
+  left: 12px;
+  width: min(360px, calc(100% - 24px));
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+}
+
+.oem-panel h1 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+.oem-kicker {
+  margin: 0 0 8px;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.oem-panel button,
+.modal-card button {
+  font: inherit;
+  cursor: pointer;
+}
+
+#notify-open {
+  margin-top: 8px;
+  background: #14532d;
+  color: #f0fdf4;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+#business-banner {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+#send-log {
+  margin-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+  font-size: 0.85rem;
+}
+
+#send-log h2,
+.modal-card h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.business-pin {
+  background: transparent;
+  border: 0;
+}
+
+.business-pin-shape {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 2px;
+  background: #15803d;
+  border: 2px solid #fef9c3;
+  transform: rotate(45deg);
+}
+
+.biz-popup-types,
+.biz-popup-note {
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.biz-popup-note {
+  color: #7f1d1d;
+}
+
+#confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: auto;
+  padding: 24px 12px;
+}
+
+#confirm-modal[hidden] {
+  display: none;
+}
+
+.modal-card {
+  width: min(560px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.modal-card p,
+.modal-card ul {
+  margin: 6px 0;
+}
+
+.draft {
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+}
+
+.pin-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+#pin-error {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#confirm-cancel {
+  background: #e2e8f0;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+#confirm-submit {
+  background: #14532d;
+  color: #f0fdf4;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 12px;
+}

@@ -30,6 +30,12 @@ LABELS = (
 _LABEL_RE = re.compile(
     "|".join(rf"(?<![a-z]){re.escape(label)}(?![a-z])" for label in LABELS)
 )
+# A static or unusable still is not a flood class. Checked before LABELS so a
+# refusal that mentions one of those words ("cannot be classified ... wet")
+# stays unusable.
+_UNUSABLE_RE = re.compile(
+    r"(?<![a-z])(?:unusable|static|cannot\s+be\s+classified)(?![a-z])"
+)
 
 
 class GrokClientError(Exception):
@@ -40,7 +46,10 @@ def classify_frame(jpeg_bytes: bytes, camera_name: str) -> str:
     """Return one flood label for a JPEG frame.
 
     Labels: dry, wet, standing water, impassable, people in water.
-    Raises GrokClientError when the key is missing or the API call fails.
+    A reply that says the frame is unusable, the camera is static, or the
+    frame cannot be classified returns ``unusable``.
+    Raises GrokClientError when the key is missing, the API call fails,
+    or the reply is not a known label.
     """
     if not isinstance(jpeg_bytes, (bytes, bytearray)) or not jpeg_bytes:
         raise GrokClientError("jpeg_bytes must be a non-empty JPEG")
@@ -155,6 +164,8 @@ def _content_text(content: object) -> str:
 
 def _extract_label(text: str) -> str:
     cleaned = text.strip().lower()
+    if _UNUSABLE_RE.search(cleaned):
+        return "unusable"
     exact = cleaned.strip("`\"'").strip().rstrip(".").strip()
     if exact in LABELS:
         return exact

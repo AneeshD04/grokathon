@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AneeshD04/grokathon/blob/main/shared/camera.schema.json",
+  "title": "Camera",
+  "description": "Camera catalog record. source is the feed that produced the still, not the alert bus source.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "lat", "lon", "still_url", "source"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "lat": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90
+    },
+    "lon": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180
+    },
+    "still_url": {
+      "type": "string",
+      "maxLength": 2048,
+      "pattern": "^https?://[^\\s@]+$",
+      "description": "http(s) JPEG URL with no userinfo."
+    },
+    "hls_url": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^https?://[^\\s@]+$"
+        }
+      ]
+    },
+    "source": {
+      "enum": ["transtar", "fl511", "ndbc", "webcoos", "usgs"]
+    },
+    "geofence_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "Optional. CamWatch cameras already carry this."
+    }
+  }
+}

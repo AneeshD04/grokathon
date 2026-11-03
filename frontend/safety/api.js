@@ -9,8 +9,8 @@
    alerts.subscribe(fn)    SSE  /api/alerts/stream       event "alert"; GET /api/alerts
    chat.send(text, bbox)   POST /api/safety/chat
    routes.impact(bbox)     GET  /api/routes/impact?bbox=west,south,east,north
-   Flood and news always hit Flask. The other calls 404 until those lanes land;
-   the page catches that and still shows the box, flood result, and news.
+   Flood and news try Flask first. If that route is down, mock.js supplies the
+   same JSON so the brief still shows. Other calls stay empty until they exist.
 */
 let API_BASE = "";
 
@@ -39,16 +39,24 @@ window.SafetyAPI = {
     API_BASE = value || "";
   },
   async floodRisk(lat, lon) {
-    const res = await fetch(apiUrl("/api/flood-risk"), {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ lat: lat, lon: lon }),
-    });
-    return readJson(res, "POST /api/flood-risk");
+    try {
+      const res = await fetch(apiUrl("/api/flood-risk"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ lat: lat, lon: lon }),
+      });
+      return await readJson(res, "POST /api/flood-risk");
+    } catch (err) {
+      return SafetyMock.floodRisk(lat, lon);
+    }
   },
   async news() {
-    const res = await fetch(apiUrl("/api/news"));
-    return readJson(res, "GET /api/news");
+    try {
+      const res = await fetch(apiUrl("/api/news"));
+      return await readJson(res, "GET /api/news");
+    } catch (err) {
+      return SafetyMock.news();
+    }
   },
   watches: {
     async create(input) {

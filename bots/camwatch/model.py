@@ -102,6 +102,7 @@ class Frame:
     filename: str | None = None
     path: Path | None = None
     thumb_url: str | None = None
+    camera_name: str | None = None
 
 
 @dataclass(frozen=True)

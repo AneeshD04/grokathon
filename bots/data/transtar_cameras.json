@@ -1,0 +1,162 @@
+[
+  {
+    "id": "180",
+    "name": "Galveston Ferry @ Galveston Ferry Landing",
+    "lat": 29.326965,
+    "lon": -94.772842,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/180.jpg",
+    "why": "Galveston-Bolivar ferry landing. Surge and high water close the landing and back up evacuation traffic on the island."
+  },
+  {
+    "id": "177",
+    "name": "Galveston Ferry @ HarborSide (N)",
+    "lat": 29.3143,
+    "lon": -94.77071,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/177.jpg",
+    "why": "Harborside approach to the Galveston ferry landing. This low street floods before the ferry stops running."
+  },
+  {
+    "id": "181",
+    "name": "Bolivar Ferry @ French Town Rd.",
+    "lat": 29.36452,
+    "lon": -94.7747,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/181.jpg",
+    "why": "French Town Road on Bolivar Peninsula, the road into the ferry landing. Peninsula roads overwash in storms."
+  },
+  {
+    "id": "182",
+    "name": "Bolivar Ferry @ 7th",
+    "lat": 29.3671,
+    "lon": -94.7612,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/182.jpg",
+    "why": "7th Street at the Bolivar ferry landing, inside the low peninsula street grid."
+  },
+  {
+    "id": "173",
+    "name": "45 GULF @ 61ST (W)",
+    "lat": 29.288568,
+    "lon": -94.838279,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/173.jpg",
+    "why": "IH-45 on Galveston Island at 61st Street, the cross-island road between the seawall and the harbor."
+  },
+  {
+    "id": "164",
+    "name": "45 GULF @ CAUSEWAY (N)",
+    "lat": 29.30133,
+    "lon": -94.89771,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/164.jpg",
+    "why": "North approach of the IH-45 Galveston Causeway, the low bay crossing onto the island. Catalog validimg is False; a GET of this still on 2026-11-03 still returned a JPEG."
+  },
+  {
+    "id": "163",
+    "name": "45 GULF @ TIKI ISLAND",
+    "lat": 29.30982,
+    "lon": -94.907671,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/163.jpg",
+    "why": "Tiki Island on the West Bay side of the Galveston Causeway. The community roads sit just above the bay."
+  },
+  {
+    "id": "129",
+    "name": "45 Gulf @ Bay Area Blvd",
+    "lat": 29.54079,
+    "lon": -95.14238,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/129.jpg",
+    "why": "IH-45 at Bay Area Boulevard, the Clear Lake coastal approach into southeast Harris County."
+  },
+  {
+    "id": "130",
+    "name": "45 Gulf @ Nasa Rd 1",
+    "lat": 29.52855,
+    "lon": -95.13016,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/130.jpg",
+    "why": "IH-45 at NASA Road 1, the low Clear Lake corridor toward Galveston Bay."
+  },
+  {
+    "id": "1816",
+    "name": "NASA 1 @ SH-146",
+    "lat": 29.563873,
+    "lon": -95.025773,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/1816.jpg",
+    "why": "NASA Road 1 at SH-146 in Seabrook, a bayfront road on Galveston Bay."
+  },
+  {
+    "id": "9039",
+    "name": "SH-35 at Orange St",
+    "lat": 29.569109,
+    "lon": -95.286374,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/9039.jpg",
+    "why": "SH-35 at Orange Street in southeast Harris County, on the low coastal plain that drains toward Clear Creek."
+  },
+  {
+    "id": "644",
+    "name": "610 SOUTH LOOP @ OLD GALVESTON",
+    "lat": 29.702766,
+    "lon": -95.277791,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/644.jpg",
+    "why": "Old Galveston Road at the IH-610 South Loop, a low southeast Houston corridor toward Sims Bayou."
+  },
+  {
+    "id": "9061",
+    "name": "SH288 @ MacGregor (Brays Bayou)",
+    "lat": 29.7127,
+    "lon": -95.3777,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/9061.jpg",
+    "why": "SH-288 at MacGregor Street where the freeway crosses Brays Bayou."
+  },
+  {
+    "id": "3524",
+    "name": "West Park @ Brays Bayou",
+    "lat": 29.71582,
+    "lon": -95.58717,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/3524.jpg",
+    "why": "Westpark Tollway at the Brays Bayou crossing."
+  },
+  {
+    "id": "4202",
+    "name": "FBTR @ Sims Bayou",
+    "lat": 29.6264,
+    "lon": -95.4828,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/4202.jpg",
+    "why": "Fort Bend Tollway at the Sims Bayou crossing."
+  },
+  {
+    "id": "1145",
+    "name": "W Sam Hou/BW8 @ Buffalo Bayou",
+    "lat": 29.76302,
+    "lon": -95.55827,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/1145.jpg",
+    "why": "Beltway 8 west where it crosses Buffalo Bayou."
+  },
+  {
+    "id": "1226",
+    "name": "69 Eastex @ Greens Bayou",
+    "lat": 29.918085,
+    "lon": -95.30757,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/1226.jpg",
+    "why": "IH-69 Eastex at the Greens Bayou crossing."
+  },
+  {
+    "id": "10000",
+    "name": "US-90 @ Hunting Bayou",
+    "lat": 29.788556,
+    "lon": -95.240142,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/10000.jpg",
+    "why": "US-90 where it crosses Hunting Bayou in east Houston."
+  },
+  {
+    "id": "8024",
+    "name": "Buffalo Speedway@N Braeswood",
+    "lat": 29.696427,
+    "lon": -95.427045,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/8024.jpg",
+    "why": "Buffalo Speedway at North Braeswood, low ground beside Brays Bayou."
+  },
+  {
+    "id": "620",
+    "name": "610 WEST LOOP @ MEMORIAL",
+    "lat": 29.773165,
+    "lon": -95.456172,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/620.jpg",
+    "why": "IH-610 West Loop at Memorial Drive, in the Buffalo Bayou floodplain along the Shepherd-Memorial corridor."
+  }
+]

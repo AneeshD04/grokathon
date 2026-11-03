@@ -7,13 +7,13 @@ still preview them (SAFETY-AGENT-DESIGN.md).
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 
 from camwatch.alerts import AlertsPublishError
 from camwatch.model import MAX_CAMERAS, Camera, build_alert, iso_now, should_publish
 from camwatch.sources import FrameFetchError, frames_for_camera
-from camwatch.vision import Classifier
+from camwatch.vision import Classifier, VisionError
 
 logger = logging.getLogger("camwatch")
 
@@ -27,6 +27,7 @@ class WatchState:
     cursor: int = 0
     # camera id → (digest, vision class, alert) waiting on a failed POST
     pending: dict[str, tuple[str, str, dict]] = field(default_factory=dict)
+    flood_keys: list[str] = field(default_factory=list)
 
     def seen(self, camera_id: str, digest: str) -> bool:
         return digest in self.digests.get(camera_id, [])
@@ -130,8 +131,12 @@ def run_once(
         fresh = [frame for frame in frames if not state.seen(camera.id, frame.digest)]
         if not fresh:
             continue
-        frame = fresh[0]
-        result = classifier.classify(frame)
+        frame = replace(fresh[0], camera_name=camera.name)
+        try:
+            result = classifier.classify(frame)
+        except VisionError as exc:
+            logger.warning("camera %s: %s", camera.id, exc)
+            return published
         used += 1
         if not should_publish(state.last_class.get(camera.id), result.vision_class):
             state.mark(camera.id, frame.digest, result.vision_class)

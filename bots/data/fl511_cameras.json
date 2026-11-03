@@ -1,0 +1,98 @@
+[
+  {
+    "id": "fl511-1004",
+    "name": "Courtney Campbell Causeway at MM PIN 08.3 (SR 60)",
+    "lat": 27.961232,
+    "lon": -82.695644,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-10978_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-1006",
+    "name": "Courtney Campbell Causeway at MM PIN 10.2 (SR 60)",
+    "lat": 27.965312,
+    "lon": -82.664535,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-10465_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-3066",
+    "name": "CR-611 at MM 0 (CR 611/Bayside Bridge)",
+    "lat": 27.919865,
+    "lon": -82.699084,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-10926_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-689",
+    "name": "West of Gandy Bridge (SR 600/Gandy Blvd)",
+    "lat": 27.878444,
+    "lon": -82.585328,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-10464_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-897",
+    "name": "SR 600/Gandy Blvd at Brighton Bay",
+    "lat": 27.868011,
+    "lon": -82.624615,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-4478_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-916",
+    "name": "West of Delgado Mem. Bridge (SR 682/Pinellas Bayway)",
+    "lat": 27.708791,
+    "lon": -82.730555,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-10169_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-917",
+    "name": "East of Delgado Mem. Bridge (SR 682/Pinellas Bayway)",
+    "lat": 27.709686,
+    "lon": -82.7225,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-4525_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-918",
+    "name": "SR 682/Pinellas Bayway at Sun Blvd",
+    "lat": 27.712775,
+    "lon": -82.714722,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-4512_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-920",
+    "name": "SR 682/Pinellas Bayway at Toll Plaza",
+    "lat": 27.719238,
+    "lon": -82.694166,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-4514_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-3226",
+    "name": "Ramp to 54th Ave S (SR 682/Pinellas Bayway)",
+    "lat": 27.718838,
+    "lon": -82.6825,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-10889_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-2665",
+    "name": "SR 679 - NORTH SIDE OF BRIDGE (SR 679/Pinellas Bayway)",
+    "lat": 27.705163,
+    "lon": -82.713675,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-10460_h.jpg",
+    "county": "Pinellas"
+  },
+  {
+    "id": "fl511-727",
+    "name": "I-275 N at 13.9 NB",
+    "lat": 27.6646,
+    "lon": -82.6771,
+    "image_url": "https://images-dis.divas.cloud/DGI/chan-10996_h.jpg",
+    "county": "Pinellas"
+  }
+]

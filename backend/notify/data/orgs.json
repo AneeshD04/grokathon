@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Galveston County Office of Emergency Management",
+    "type": "county_em",
+    "county": "Galveston",
+    "email": null,
+    "phone": null
+  },
+  {
+    "name": "National Weather Service Houston/Galveston",
+    "type": "nws",
+    "county": "Galveston",
+    "email": null,
+    "phone": null
+  },
+  {
+    "name": "U.S. Coast Guard Sector Houston-Galveston",
+    "type": "uscg",
+    "county": "Galveston",
+    "email": null,
+    "phone": null
+  },
+  {
+    "name": "City of Galveston 311",
+    "type": "311",
+    "county": "Galveston",
+    "email": null,
+    "phone": null
+  }
+]

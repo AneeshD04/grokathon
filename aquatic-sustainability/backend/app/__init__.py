@@ -34,6 +34,9 @@ def create_app():
     # registering API routes
     from .routes import bp as api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
+    from .modelwatch import bp as modelwatch_bp, start_modelwatch
+    app.register_blueprint(modelwatch_bp, url_prefix="/api")
+    start_modelwatch(app)
 
     # Homepage - landing page
     @app.route("/")

@@ -1363,7 +1363,7 @@
       host.appendChild(mount);
       window.SafetyRoster.attach(mount);
     }
-    if ((host && host.querySelector("[data-safety-roster-root]")) || tries > 40) {
+    if ((host && host.querySelector("[data-safety-roster-root]")) || tries > 150) {
       clearInterval(timer);
     }
   }, 200);

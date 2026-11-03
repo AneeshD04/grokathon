@@ -1,0 +1,43 @@
+{
+  "name": "recorded USGS IV snapshot — Galveston Bayou demo, not live",
+  "value": {
+    "timeSeries": [
+      {
+        "sourceInfo": {
+          "siteName": "Dickinson Bayou at SH 3 nr Dickinson, TX",
+          "siteCode": [{ "value": "08077650", "network": "NWIS", "agencyCode": "USGS" }],
+          "geoLocation": {
+            "geogLocation": {
+              "srs": "EPSG:4326",
+              "latitude": 29.4608,
+              "longitude": -95.0514
+            }
+          }
+        },
+        "variable": {
+          "variableCode": [{ "value": "00065" }],
+          "variableName": "Gage height, ft"
+        },
+        "values": [
+          {
+            "value": [
+              { "value": "3.10", "dateTime": "2024-05-17T02:45:00.000-05:00" },
+              { "value": "6.40", "dateTime": "2024-05-17T03:00:00.000-05:00" }
+            ]
+          }
+        ]
+      },
+      {
+        "sourceInfo": {
+          "siteName": "Quiet ditch (below stage)",
+          "siteCode": [{ "value": "08000000" }],
+          "geoLocation": {
+            "geogLocation": { "latitude": 29.40, "longitude": -94.90 }
+          }
+        },
+        "variable": { "variableCode": [{ "value": "00065" }] },
+        "values": [{ "value": [{ "value": "1.20", "dateTime": "2024-05-17T03:00:00.000-05:00" }] }]
+      }
+    ]
+  }
+}

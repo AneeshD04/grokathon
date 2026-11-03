@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Safety Agent</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <link rel="stylesheet" href="safety.css" />
+  <link rel="stylesheet" href="drawer.css" />
+</head>
+<body>
+  <div id="map" data-basemap="map"></div>
+
+  <div class="float-stack">
+    <div class="map-type-control" role="group" aria-label="Map type">
+      <button type="button" id="basemap-map" class="is-active" aria-pressed="true">Map</button>
+      <button type="button" id="basemap-satellite" aria-pressed="false">Satellite</button>
+    </div>
+    <button type="button" id="draw-box" class="preset-btn" aria-pressed="false">Draw box</button>
+    <button type="button" id="galveston-preset" class="preset-btn">Galveston County</button>
+    <section id="bbox-readout" class="bbox-card" aria-live="polite">
+      <p id="bbox-hint">Pan the globe. Press Draw box, then drag a rectangle.</p>
+      <h2 id="bbox-name">No region</h2>
+      <dl>
+        <div><dt>West</dt><dd id="bbox-west">—</dd></div>
+        <div><dt>South</dt><dd id="bbox-south">—</dd></div>
+        <div><dt>East</dt><dd id="bbox-east">—</dd></div>
+        <div><dt>North</dt><dd id="bbox-north">—</dd></div>
+        <div><dt>Center</dt><dd id="bbox-center">—</dd></div>
+      </dl>
+      <p id="bbox-watch"></p>
+    </section>
+  </div>
+
+  <aside id="safety-drawer" class="safety-drawer" aria-label="Safety Agent"></aside>
+  <section id="camera-panel" class="camera-panel" hidden></section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script>
+    window.SafetyBus = {
+      _handlers: {},
+      on: function (name, fn) {
+        (this._handlers[name] || (this._handlers[name] = [])).push(fn);
+      },
+      emit: function (name, payload) {
+        (this._handlers[name] || []).forEach(function (fn) { fn(payload); });
+      },
+    };
+  </script>
+  <script src="counties.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script src="map.js"></script>
+  <script src="cameras.js"></script>
+  <script src="camera-pins.js"></script>
+  <script src="drawer.js"></script>
+  <script src="alerts.js"></script>
+</body>
+</html>

@@ -209,6 +209,7 @@ def _apply_inbox(cameras: list[Camera], inbox: Path | None) -> list[Camera]:
                     geofence_id=camera.geofence_id,
                     still_url=camera.still_url,
                     inbox_dir=resolved,
+                    mp4_path=camera.mp4_path,
                 )
             )
             replaced = True
@@ -227,6 +228,7 @@ def _apply_inbox(cameras: list[Camera], inbox: Path | None) -> list[Camera]:
         geofence_id=first.geofence_id,
         still_url=None,
         inbox_dir=resolved,
+        mp4_path=first.mp4_path,
     )
     return updated
 

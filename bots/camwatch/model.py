@@ -93,6 +93,7 @@ class Camera:
     geofence_id: str
     still_url: str | None = None
     inbox_dir: Path | None = None
+    mp4_path: Path | None = None
 
 
 @dataclass(frozen=True)

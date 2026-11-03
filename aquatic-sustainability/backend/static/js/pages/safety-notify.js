@@ -40,6 +40,11 @@
     return null;
   }
 
+  function isDemoAlert(alert) {
+    const raw = alert && alert.evidence && alert.evidence.raw;
+    return !!(raw && (raw.demo === true || raw.demo === "true"));
+  }
+
   function draftMessage(alert) {
     const alerts = window.SafetyOem && typeof window.SafetyOem.getAlerts === "function"
       ? window.SafetyOem.getAlerts()
@@ -50,6 +55,13 @@
         alerts.map(function (item) {
           return (item.title || "Alert") + ": " + (item.summary || "");
         }).join(" ")
+      );
+    }
+    if (isDemoAlert(alert)) {
+      return (
+        "DEMO ONLY. Simulated Galveston County incident: coastal surge plus a ship-channel oil and chemical release. " +
+        (alert.summary || "") +
+        " Not a live National Weather Service product and not a lab result. Confirm logs a sandbox fan-out and does not send."
       );
     }
     if (alert && alert.summary) {

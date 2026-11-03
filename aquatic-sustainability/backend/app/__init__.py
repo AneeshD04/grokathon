@@ -37,6 +37,8 @@ def create_app():
     from .modelwatch import bp as modelwatch_bp, start_modelwatch
     app.register_blueprint(modelwatch_bp, url_prefix="/api")
     start_modelwatch(app)
+    from .safety_chat import bp as safety_chat_bp
+    app.register_blueprint(safety_chat_bp, url_prefix="/api")
 
     # Safety Agent APIs (#11 alert bus, #13 PIN notify, Places nearby).
     # Additive register only — do not replace DualCNN-LSTM routes.

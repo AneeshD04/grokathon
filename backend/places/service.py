@@ -37,7 +37,10 @@ def lookup(body: NearbyRequest) -> NearbyResponse:
     radius_m = _cover_radius_m(center_lat, center_lon, ring)
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
     if api_key:
-        found = search_nearby(center_lat, center_lon, radius_m, api_key)
+        if body.types:
+            found = search_nearby(center_lat, center_lon, radius_m, api_key, body.types)
+        else:
+            found = search_nearby(center_lat, center_lon, radius_m, api_key)
         source = "google"
     else:
         found = list(FIXTURE_BUSINESSES)
@@ -52,9 +55,15 @@ def lookup(body: NearbyRequest) -> NearbyResponse:
     )
 
 
-def search_nearby(center_lat: float, center_lon: float, radius_m: float, api_key: str) -> list[Business]:
+def search_nearby(
+    center_lat: float,
+    center_lon: float,
+    radius_m: float,
+    api_key: str,
+    included_types: list[str] | None = None,
+) -> list[Business]:
     payload = {
-        "includedTypes": INCLUDED_TYPES,
+        "includedTypes": included_types or INCLUDED_TYPES,
         "maxResultCount": MAX_RESULTS,
         "rankPreference": "DISTANCE",
         "locationRestriction": {

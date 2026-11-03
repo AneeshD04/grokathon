@@ -22,7 +22,9 @@ _BLOCKED_HOSTS = {
 
 
 class FrameFetchError(Exception):
-    pass
+    def __init__(self, message: str, *, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 def _host_is_blocked(host: str) -> bool:
@@ -85,7 +87,7 @@ def fetch_jpeg(url: str, timeout: float = 10.0, opener=None) -> bytes:
         with opener(request, timeout=timeout) as response:
             data = response.read(MAX_JPEG_BYTES + 1)
     except urllib.error.HTTPError as exc:
-        raise FrameFetchError(f"JPEG GET failed: HTTP {exc.code}") from exc
+        raise FrameFetchError(f"JPEG GET failed: HTTP {exc.code}", status=exc.code) from exc
     except urllib.error.URLError as exc:
         raise FrameFetchError(f"JPEG GET failed: {exc.reason}") from exc
     if len(data) > MAX_JPEG_BYTES:
@@ -138,10 +140,55 @@ def inbox_frames(directory: Path) -> list[Frame]:
     return frames
 
 
+def jpeg_from_mp4(data: bytes) -> bytes:
+    """Return the one JPEG sample stored in a local MP4 (ftyp + mdat).
+
+    Stdlib only. The fixture is a JPEG inside the media data box, not an
+    H.264 bitstream, so this does not shell out to ffmpeg.
+    """
+    if len(data) < 8 or data[4:8] != b"ftyp":
+        raise FrameFetchError("mp4 fallback is not an mp4")
+    start = data.find(b"\xff\xd8")
+    if start < 0:
+        raise FrameFetchError("mp4 fallback has no JPEG frame")
+    end = data.find(b"\xff\xd9", start + 2)
+    if end < 0:
+        raise FrameFetchError("mp4 JPEG frame is truncated")
+    jpeg = data[start : end + 2]
+    if len(jpeg) > MAX_JPEG_BYTES:
+        raise FrameFetchError("JPEG is larger than 5MB")
+    return jpeg
+
+
+def frame_from_mp4(path: Path, *, thumb_url: str | None = None) -> Frame:
+    try:
+        with path.open("rb") as handle:
+            data = handle.read(MAX_JPEG_BYTES + 65537)
+    except OSError as exc:
+        raise FrameFetchError(f"mp4 fallback unreadable: {path.name}") from exc
+    if len(data) > MAX_JPEG_BYTES + 65536:
+        raise FrameFetchError("mp4 fallback is larger than 5MB")
+    return frame_from_bytes(
+        jpeg_from_mp4(data),
+        filename=path.name,
+        path=path,
+        thumb_url=thumb_url,
+    )
+
+
 def frames_for_camera(camera: Camera, *, fetcher=fetch_jpeg) -> list[Frame]:
-    """One live still, or every JPEG currently in the inbox, oldest first."""
+    """One live still, or every JPEG currently in the inbox, oldest first.
+
+    HTTP 404 on ``still_url`` uses ``camera.mp4_path`` when that local file
+    is set. Any other fetch error stays a fetch error.
+    """
     if camera.still_url:
-        data = fetcher(camera.still_url)
+        try:
+            data = fetcher(camera.still_url)
+        except FrameFetchError as exc:
+            if exc.status == 404 and camera.mp4_path is not None:
+                return [frame_from_mp4(camera.mp4_path, thumb_url=camera.still_url)]
+            raise
         filename = Path(urllib.parse.urlparse(camera.still_url).path).name or None
         return [
             frame_from_bytes(

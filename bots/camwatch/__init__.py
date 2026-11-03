@@ -10,6 +10,7 @@ The alert JSON matches ``docs/SAFETY-AGENT-DESIGN.md`` and Devanshu's
 ``POST /api/alerts`` contract on issue #11. ``XAI_API_KEY`` is optional:
 without it, a filename/sidecar fallback classifies demo frames so a
 flooded-road image dropped in the test inbox still creates an alert.
+A still that returns HTTP 404 can use a local one-frame MP4 the same way.
 """
 
 __version__ = "0.1.0"

@@ -70,6 +70,7 @@ def _camera(item: dict, default_geofence: str, base: Path) -> Camera:
         inbox_dir = inbox_path
     if still_url is None and inbox_dir is None:
         raise ValueError(f"camera {camera_id} needs still_url or inbox_dir")
+    mp4_path = _local_path(item.get("mp4"), base)
     return Camera(
         id=camera_id,
         name=name,
@@ -78,4 +79,14 @@ def _camera(item: dict, default_geofence: str, base: Path) -> Camera:
         geofence_id=geofence_id,
         still_url=still_url,
         inbox_dir=inbox_dir,
+        mp4_path=mp4_path,
     )
+
+
+def _local_path(raw: object, base: Path) -> Path | None:
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    path = Path(raw.strip())
+    if not path.is_absolute():
+        path = (base / path).resolve()
+    return path

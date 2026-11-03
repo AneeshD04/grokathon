@@ -93,6 +93,7 @@
       minLat: bbox[1],
       maxLon: bbox[2],
       maxLat: bbox[3],
+      bbox: bbox.slice(),
       county: current.county,
       watch: current.watch,
       mocked: current.mocked,

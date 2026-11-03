@@ -13,4 +13,6 @@ You are one of several agents on `AneeshD04/grokathon`. Read `AGENTS.md` and `OW
 - Do not edit another lane's paths. Lanes: Aneesh `agents/` protocol; Devanshu `backend/`; Kabir `frontend/`; Athithan `bots/`.
 - Overlap → stop, comment `OVERLAP`, ping `@AneeshD04`.
 - Delegate with `HANDOFF @handle`, then unclaim. Do not silently implement their lane.
+- Before any edit: `git fetch origin && git pull --ff-only` (or rebase onto latest `origin/main`). Pull again before push; if behind, rebase/ff then push. Never force-push `main`.
+- Product code lives in `aquatic-sustainability/` on current `main` — not a stale clone or empty `backend/` / `frontend/` stubs.
 - Branch: `agent/<github-handle>/#<issue>-slug`. No direct `main` pushes.

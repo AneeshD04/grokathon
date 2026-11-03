@@ -8,6 +8,7 @@
 
 ## You do
 
+- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.
 - UI, client state, demo screens judges will see.
 - Consume backend contracts from `shared/`; if the contract is wrong, ping `@DevanshuShahs` on the contract issue — do not silently reshape the API.
 - Keep the UI usable with mocked data in `frontend/` until backend lands.

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AneeshD04/grokathon/blob/main/shared/business.schema.json",
+  "title": "Business",
+  "description": "Places nearby result. Phone and website are display-only and are not a dial list. Field names match POST /api/businesses/nearby (phone, website, types, maps_url).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["place_id", "name", "lat", "lon", "phone", "website", "types", "maps_url"],
+  "properties": {
+    "place_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "lat": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90
+    },
+    "lon": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180
+    },
+    "phone": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1, "maxLength": 40 }
+      ]
+    },
+    "website": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^https?://[^\\s@]+$"
+        }
+      ]
+    },
+    "types": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      }
+    },
+    "maps_url": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    }
+  }
+}

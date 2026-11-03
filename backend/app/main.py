@@ -17,6 +17,7 @@ from fastapi.responses import StreamingResponse
 
 from app.models import AlertCreate, AlertPostResponse, Watch, WatchCreate
 from app.store import SubscriberLimitError, WatchLimitError, bus
+from places.router import router as places_router
 
 KEEPALIVE_S = 15.0
 
@@ -55,6 +56,7 @@ async def require_bus_token(request: Request) -> None:
 
 
 app = FastAPI(title="Grokathon alert bus", version="0.1.1")
+app.include_router(places_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),

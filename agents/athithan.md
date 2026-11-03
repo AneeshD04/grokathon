@@ -8,6 +8,7 @@
 
 ## You do
 
+- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.
 - Grok Bot wiring, bot routines, live demo script, anything that *is* a Grok Bot rather than app UI/API.
 - Coordinate with `@buzzkabir` for surfaces and `@DevanshuShahs` for data the bots call.
 

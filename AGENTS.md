@@ -14,6 +14,7 @@ Issue bus: [Issues](https://github.com/AneeshD04/grokathon/issues)
 4. **Never write over another agent's claimed paths.** Ownership is in `OWNERSHIP.md`. Claimed files are listed on the issue.
 5. **Talk with `@mentions`.** Ping the GitHub handle, not a nickname. The ping *is* the handoff.
 6. **One agent, one claimed task.** Finish or hand off before claiming another P0/P1.
+7. **Always sync before you edit or push.** `git fetch origin && git pull --ff-only` (or rebase onto latest `origin/main`) before the first file change. Pull again before you push; if behind, fast-forward or rebase, then push. Never force-push `main`. Product code lives in `aquatic-sustainability/` — build on current `main`, not a stale clone or empty `backend/` / `frontend/` stubs.
 
 ## Roster (ping these)
 
@@ -33,18 +34,22 @@ Per-agent briefs live in [`agents/`](agents/). Grok Bot paste-prompts live in [`
 Run this **before** editing anything:
 
 ```bash
+git fetch origin
+git pull --ff-only
+# already on a branch?  git fetch origin && git rebase origin/main
 gh issue list --state open --limit 50
 gh issue list --search "status:claimed OR status:in-progress" --state open
 ```
 
 Then:
 
-1. Read this file, `OWNERSHIP.md`, and **your** file in `agents/`.
-2. Search issues for the work you are about to do.
-3. If a matching open issue exists → comment + `@mention` the assignee. Do not open a second issue.
-4. If none exists → open the right template (`task` / `ping` / `handoff` / `blocker`).
-5. Claim it (below) **before** the first file edit.
-6. Branch from `main`: `agent/<github-handle>/#<issue>-short-slug`.
+1. Confirm you are on latest `origin/main` (or rebased onto it). Do not edit a stale tree.
+2. Read this file, `OWNERSHIP.md`, and **your** file in `agents/`.
+3. Search issues for the work you are about to do.
+4. If a matching open issue exists → comment + `@mention` the assignee. Do not open a second issue.
+5. If none exists → open the right template (`task` / `ping` / `handoff` / `blocker`).
+6. Claim it (below) **before** the first file edit.
+7. Branch from `main`: `agent/<github-handle>/#<issue>-short-slug`.
 
 ## Claiming work
 
@@ -118,6 +123,9 @@ See `OWNERSHIP.md`. Short version:
 ## Git workflow
 
 - Default branch: `main`.
+- **Before edit:** `git fetch origin && git pull --ff-only`. If you already have a branch, rebase onto latest `origin/main`.
+- **Before push:** fetch/pull again. If behind, fast-forward or rebase, then push. Never force-push `main`.
+- Product code lives in `aquatic-sustainability/` on current `main`. Do not implement against a stale snapshot or empty `backend/` / `frontend/` stubs.
 - No direct pushes to `main` except a documented conductor hotfix pinged on an issue.
 - One issue ↔ one branch ↔ one PR.
 - PR title: `#<issue> <what>` and link the issue (`Fixes #n` or `Refs #n`).
@@ -150,6 +158,7 @@ Bots:
 
 - Poll / watch GitHub issues for `@their-human` and assignments.
 - Reply **on the issue**, not in a side channel.
+- Sync to latest `origin/main` before edit or push. Never force-push `main`.
 - Delegate by `HANDOFF @Handle`, never by silently editing another lane.
 - Refuse to implement if the claim/lock check fails.
 

@@ -8,6 +8,7 @@
 
 ## You do
 
+- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.
 - APIs, server, data, env for backend secrets.
 - Publish contracts into `shared/` only after a `lane:shared` issue `@mentions` `@buzzkabir` (and Athithan if bots consume it).
 - Reply on issues when `@DevanshuShahs` is pinged — even to say "claimed" or "not me".

@@ -388,4 +388,54 @@ annotations.innerHTML = '<p class="muted">Annotations will appear here.</p>';
 
 // Create modal on page load
 createModal();
+
+function hookFloodMapConstructor() {
+  if (!window.google || !google.maps || typeof google.maps.Map !== "function") return false;
+  if (google.maps.Map.__oemHooked) return true;
+  const Original = google.maps.Map;
+  function HookedMap(el, opts) {
+    const instance = new Original(el, opts);
+    if (el && el.id === "map") {
+      window.floodMap = instance;
+      window.dispatchEvent(new CustomEvent("flood-map-ready", { detail: { map: instance } }));
+    }
+    return instance;
+  }
+  HookedMap.prototype = Original.prototype;
+  HookedMap.__oemHooked = true;
+  google.maps.Map = HookedMap;
+  return true;
+}
+
+(function exposeFloodMapEarly() {
+  if (hookFloodMapConstructor()) return;
+  const timer = setInterval(function () {
+    if (hookFloodMapConstructor()) clearInterval(timer);
+  }, 25);
+  setTimeout(function () { clearInterval(timer); }, 20000);
+})();
+
+function loadScriptOnce(src) {
+  return new Promise(function (resolve, reject) {
+    if (document.querySelector('script[src="' + src + '"]')) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = function () {
+      reject(new Error("failed to load " + src));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+loadScriptOnce("/static/js/pages/counties.js")
+  .then(function () {
+    return loadScriptOnce("/static/js/pages/regionPicker.js");
+  })
+  .catch(function (err) {
+    console.warn("OEM region picker failed to load", err);
+  });
 })();

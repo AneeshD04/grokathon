@@ -24,6 +24,9 @@ _DIGESTS_KEPT = 32
 class WatchState:
     last_class: dict[str, str] = field(default_factory=dict)
     digests: dict[str, list[str]] = field(default_factory=dict)
+    cursor: int = 0
+    # camera id → (digest, vision class, alert) waiting on a failed POST
+    pending: dict[str, tuple[str, str, dict]] = field(default_factory=dict)
 
     def seen(self, camera_id: str, digest: str) -> bool:
         return digest in self.digests.get(camera_id, [])
@@ -85,48 +88,86 @@ def run_once(
     state: WatchState,
     watches: list[dict] | None = None,
     max_cameras: int = MAX_CAMERAS,
+    max_frames: int = 1,
     now: datetime | None = None,
     fetcher=None,
 ) -> list[dict]:
     """Return the alert bodies that were published this pass.
 
-    A publish failure leaves that frame unmarked so the next pass retries.
+    Up to 8 cameras are eligible. Each pass classifies one new frame
+    (#33: at most one vision call per 15–30s). Unchanged JPEGs are skipped
+    before classification. A failed POST is retried next pass without
+    calling vision again.
+
+    When ``watches`` is a non-empty registry with no ``camera`` source,
+    this pass samples nothing (the region is not being watched).
     """
     stamp = iso_now(now)
     published: list[dict] = []
     pull = frames_for_camera if fetcher is None else _with_fetcher(fetcher)
-    for camera in select_cameras(cameras, watches, max_cameras=max_cameras):
+    active = select_cameras(cameras, watches, max_cameras=max_cameras)
+    if not active or max_frames < 1:
+        return []
+    start = state.cursor % len(active)
+    order = list(range(start, len(active))) + list(range(start))
+    used = 0
+    for index in order:
+        if used >= max_frames:
+            break
+        camera = active[index]
+        held = state.pending.get(camera.id)
+        if held is not None:
+            digest, vision_class, alert = held
+            if _publish(publisher, state, camera.id, digest, vision_class, alert, published):
+                used += 1
+                state.cursor = (index + 1) % len(active)
+            continue
         try:
             frames = pull(camera)
         except FrameFetchError as exc:
             logger.warning("camera %s: %s", camera.id, exc)
             continue
-        for frame in frames:
-            if state.seen(camera.id, frame.digest):
-                continue
-            result = classifier.classify(frame)
-            if not should_publish(state.last_class.get(camera.id), result.vision_class):
-                state.mark(camera.id, frame.digest, result.vision_class)
-                continue
-            alert = build_alert(camera, result, frame, ts=stamp)
-            try:
-                response = publisher.publish(alert)
-            except AlertsPublishError:
-                logger.warning("camera %s: alert publish failed; will retry", camera.id)
-                raise
+        fresh = [frame for frame in frames if not state.seen(camera.id, frame.digest)]
+        if not fresh:
+            continue
+        frame = fresh[0]
+        result = classifier.classify(frame)
+        used += 1
+        if not should_publish(state.last_class.get(camera.id), result.vision_class):
             state.mark(camera.id, frame.digest, result.vision_class)
-            # #11 dedupes the same dedupe_key for 60s and returns the original alert.
-            if isinstance(response, dict) and response.get("deduped"):
-                logger.info("bus deduped %s", alert["dedupe_key"])
-                continue
-            published.append(alert)
-            logger.info(
-                "alert %s %s %s",
-                camera.id,
-                result.vision_class,
-                alert["dedupe_key"],
-            )
+            state.cursor = (index + 1) % len(active)
+            continue
+        alert = build_alert(camera, result, frame, ts=stamp)
+        _publish(
+            publisher,
+            state,
+            camera.id,
+            frame.digest,
+            result.vision_class,
+            alert,
+            published,
+        )
+        state.cursor = (index + 1) % len(active)
     return published
+
+
+def _publish(publisher, state: WatchState, camera_id: str, digest: str, vision_class: str, alert: dict, published: list[dict]) -> bool:
+    """POST one alert. On failure, hold it and re-raise so the loop backs off."""
+    try:
+        response = publisher.publish(alert)
+    except AlertsPublishError:
+        state.pending[camera_id] = (digest, vision_class, alert)
+        logger.warning("camera %s: alert publish failed; will retry without another vision call", camera_id)
+        raise
+    state.pending.pop(camera_id, None)
+    state.mark(camera_id, digest, vision_class)
+    # #11 dedupes the same dedupe_key for 60s and returns the original alert.
+    if isinstance(response, dict) and response.get("deduped"):
+        logger.info("bus deduped %s", alert["dedupe_key"])
+        return True
+    published.append(alert)
+    logger.info("alert %s %s %s", camera_id, vision_class, alert["dedupe_key"])
+    return True
 
 
 def _with_fetcher(fetcher):

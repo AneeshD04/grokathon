@@ -1,7 +1,8 @@
 """Publish alerts to POST /api/alerts, or to a local JSONL file when the API is down.
 
-The file sink is the seam for tests and for running before issue #11 is on main.
-Both sinks speak the same alert object.
+The file sink is the seam for tests and for running when the sidecar is down.
+The bus itself is ``backend/`` (issue #11, on main). Both sinks speak the
+same alert object. ``thumb_url`` is either null or an http(s) URL.
 """
 
 from __future__ import annotations
@@ -18,19 +19,37 @@ class AlertsPublishError(Exception):
     pass
 
 
-class HttpAlertsClient:
-    """POST {base}/api/alerts. Response is ``{alert, deduped}`` (issue #11)."""
+def _headers(token: str) -> dict[str, str]:
+    headers = {"Content-Type": "application/json"}
+    if token.strip():
+        headers["X-Alert-Bus-Token"] = token.strip()
+    return headers
 
-    def __init__(self, base_url: str, timeout: float = 5.0, opener=urllib.request.urlopen) -> None:
+
+class HttpAlertsClient:
+    """POST {base}/api/alerts. Response is ``{alert, deduped}`` (issue #11).
+
+    ``ALERT_BUS_TOKEN``, when set, is sent as ``X-Alert-Bus-Token`` and is
+    never written to the alert body or the log.
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        timeout: float = 5.0,
+        opener=urllib.request.urlopen,
+        token: str = "",
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self._opener = opener
+        self._token = token.strip()
 
     def publish(self, alert: dict) -> dict:
         request = urllib.request.Request(
             f"{self.base_url}/api/alerts",
             data=json.dumps(alert).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
+            headers=_headers(self._token),
             method="POST",
         )
         try:
@@ -72,15 +91,22 @@ class FileAlertsClient:
         return record
 
 
-def fetch_watches(base_url: str, timeout: float = 3.0, opener=urllib.request.urlopen) -> list[dict] | None:
+def fetch_watches(
+    base_url: str,
+    timeout: float = 3.0,
+    opener=urllib.request.urlopen,
+    token: str = "",
+) -> list[dict] | None:
     """Return watches, or None when the API cannot be reached.
 
     None means "no registry yet" — CamWatch keeps using the local camera file.
     An empty list means the registry is up and nobody has called set_watch.
     """
+    headers = _headers(token)
+    headers["Accept"] = "application/json"
     request = urllib.request.Request(
         f"{base_url.rstrip('/')}/api/watches",
-        headers={"Accept": "application/json"},
+        headers=headers,
         method="GET",
     )
     try:

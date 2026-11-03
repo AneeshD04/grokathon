@@ -5,6 +5,7 @@ Run from bots/: ``python -m unittest tests.test_flooded_road -v``
 
 from __future__ import annotations
 
+import io
 import json
 import shutil
 import tempfile
@@ -15,7 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from camwatch.__main__ import main
-from camwatch.alerts import HttpAlertsClient
+from camwatch.alerts import AlertsPublishError, HttpAlertsClient
 from camwatch.config import load_config
 from camwatch.model import MAX_CAMERAS, Camera, check_interval
 from camwatch.sources import frame_from_bytes
@@ -286,6 +287,145 @@ class FloodedRoadTests(unittest.TestCase):
         self.assertEqual(fallen.backend, "fallback")
         self.assertEqual(fallen.vision_class, "overtopped_road")
         self.assertIsInstance(build_classifier({}), FallbackVision)
+
+    def test_one_new_frame_per_pass_round_robin(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            first = root / "a"
+            second = root / "b"
+            first.mkdir()
+            second.mkdir()
+            shutil.copy(FLOODED, first / "flooded-road.jpg")
+            shutil.copy(FLOODED, second / "flooded-road.jpg")
+            cameras = [
+                _inbox_camera(first),
+                Camera(
+                    id="galveston-landing",
+                    name="Galveston Landing (ferry)",
+                    lat=29.31,
+                    lon=-94.80,
+                    geofence_id="houston-demo",
+                    inbox_dir=second,
+                ),
+            ]
+            sink = _Memory()
+            state = WatchState()
+            run_once(cameras, classifier=FallbackVision(), publisher=sink, state=state)
+            run_once(cameras, classifier=FallbackVision(), publisher=sink, state=state)
+            self.assertEqual(
+                [alert["dedupe_key"] for alert in sink.alerts],
+                [
+                    "cam:buffalo-1:water_over_road",
+                    "cam:galveston-landing:water_over_road",
+                ],
+            )
+
+    def test_rpm_and_http_429_use_fallback_without_a_second_call(self) -> None:
+        frame = frame_from_bytes(FLOODED.read_bytes(), filename="flooded-road.jpg")
+        self.assertIsInstance(
+            build_classifier({"XAI_API_KEY": "test-key-not-real", "GROK_MAX_RPM": "0"}),
+            FallbackVision,
+        )
+        calls = {"n": 0}
+
+        class _Response:
+            def read(self) -> bytes:
+                return json.dumps(
+                    {
+                        "choices": [
+                            {
+                                "message": {
+                                    "content": '{"class":"smoke","confidence":0.8,"summary":"Vision: smoke visible.","uncertain":false}'
+                                }
+                            }
+                        ]
+                    }
+                ).encode("utf-8")
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc) -> bool:
+                return False
+
+        def opener(request, timeout=0):
+            calls["n"] += 1
+            return _Response()
+
+        vision = GrokVision(api_key="test-key-not-real", opener=opener, fallback=FallbackVision(), rpm=1)
+        self.assertEqual(vision.classify(frame).backend, "grok")
+        self.assertEqual(vision.classify(frame).backend, "fallback")
+        self.assertEqual(calls["n"], 1)
+
+        def quota(request, timeout=0):
+            raise urllib.error.HTTPError(request.full_url, 429, "quota", hdrs=None, fp=io.BytesIO(b""))
+
+        fallen = GrokVision(
+            api_key="test-key-not-real",
+            opener=quota,
+            fallback=FallbackVision(),
+            rpm=None,
+        ).classify(frame)
+        self.assertEqual(fallen.backend, "fallback")
+        self.assertEqual(fallen.vision_class, "overtopped_road")
+
+    def test_bus_token_header_and_retry_skips_vision(self) -> None:
+        captured: dict[str, str | None] = {}
+
+        class _Response:
+            def read(self) -> bytes:
+                return b'{"alert":{"id":"01TEST"},"deduped":false}'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc) -> bool:
+                return False
+
+        def opener(request, timeout=0):
+            captured["token"] = request.get_header("X-alert-bus-token")
+            captured["body"] = request.data.decode("utf-8")
+            return _Response()
+
+        client = HttpAlertsClient("http://127.0.0.1:8000", token="not-a-real-token", opener=opener)
+        client.publish({"source": "camera", "title": "Water over roadway"})
+        self.assertEqual(captured["token"], "not-a-real-token")
+        self.assertNotIn("not-a-real-token", captured["body"])
+
+        class _Flaky:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def publish(self, alert: dict) -> dict:
+                self.calls += 1
+                if self.calls == 1:
+                    raise AlertsPublishError("down")
+                return {"alert": alert, "deduped": False}
+
+        class _Counting(FallbackVision):
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def classify(self, frame):
+                self.calls += 1
+                return super().classify(frame)
+
+        inbox = self._inbox_with("flooded-road.jpg")
+        flaky = _Flaky()
+        classifier = _Counting()
+        state = WatchState()
+        with self.assertRaises(AlertsPublishError):
+            run_once([_inbox_camera(inbox)], classifier=classifier, publisher=flaky, state=state)
+        retried = run_once(
+            [_inbox_camera(inbox)],
+            classifier=classifier,
+            publisher=flaky,
+            state=state,
+        )
+        self.assertEqual(classifier.calls, 1)
+        self.assertEqual(flaky.calls, 2)
+        self.assertEqual(len(retried), 1)
+        self.assertEqual(retried[0]["dedupe_key"], "cam:buffalo-1:water_over_road")
 
     def _inbox_with(self, name: str) -> Path:
         directory = Path(tempfile.mkdtemp(prefix="camwatch-inbox-"))

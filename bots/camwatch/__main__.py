@@ -27,7 +27,16 @@ def main(argv: list[str] | None = None) -> int:
         default=_PACKAGE_ROOT / "cameras.example.json",
         help="Local camera JSON (id, name, lat, lon, still_url or inbox_dir)",
     )
-    parser.add_argument("--once", action="store_true", help="Sample once and exit")
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Sample one frame and exit (this is the default)",
+    )
+    parser.add_argument(
+        "--loop",
+        action="store_true",
+        help="Keep sampling every 15–30s. Do not leave this running overnight.",
+    )
     parser.add_argument(
         "--sink",
         choices=("http", "file"),
@@ -74,17 +83,18 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     cameras = _apply_inbox(list(config.cameras), args.inbox)
     classifier = build_classifier()
+    bus_token = os.environ.get("ALERT_BUS_TOKEN", "").strip()
     publisher = (
         FileAlertsClient(args.out)
         if args.sink == "file"
-        else HttpAlertsClient(args.alerts_url)
+        else HttpAlertsClient(args.alerts_url, token=bus_token)
     )
     state = WatchState()
 
     def tick() -> int:
         watches = None
         if args.sink == "http" and not args.ignore_watches:
-            watches = fetch_watches(args.alerts_url)
+            watches = fetch_watches(args.alerts_url, token=bus_token)
         alerts = run_once(
             cameras,
             classifier=classifier,
@@ -97,7 +107,7 @@ def main(argv: list[str] | None = None) -> int:
         return len(alerts)
 
     try:
-        if args.once:
+        if not args.loop or args.once:
             tick()
             return 0
         while True:

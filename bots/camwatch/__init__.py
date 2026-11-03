@@ -1,8 +1,10 @@
 """CamWatch — camera vision worker for the Safety Agent.
 
-Samples at most 8 cameras, pulls a JPEG every 15–30 seconds, classifies the
-frame (standing water, overtopped road, debris, smoke, all-clear), and
-POSTs ``/api/alerts`` only when the class changes.
+Up to 8 cameras are eligible. Each pass pulls one new JPEG (every 15–30
+seconds while looping), classifies it (standing water, overtopped road,
+debris, smoke, all-clear), and POSTs ``/api/alerts`` only when the class
+changes. Unchanged frames are not sent to Grok. ``GROK_MAX_RPM`` caps
+vision calls (default 2/min, shared with the rest of the Safety Agent).
 
 The alert JSON matches ``docs/SAFETY-AGENT-DESIGN.md`` and Devanshu's
 ``POST /api/alerts`` contract on issue #11. ``XAI_API_KEY`` is optional:

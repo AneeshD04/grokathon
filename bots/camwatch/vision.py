@@ -9,7 +9,9 @@ done-when pass without a live key.
 from __future__ import annotations
 
 import json
+import logging
 import os
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -23,6 +25,11 @@ from camwatch.model import (
 
 XAI_API_BASE = "https://api.x.ai/v1"
 DEFAULT_MODEL = "grok-4.7"
+# Shared with the chat proxy (#33). Unset means 2/min: one camera at the slow
+# end of the 15–30s sample window. Not a second CamWatch-only counter.
+DEFAULT_GROK_MAX_RPM = 2
+
+logger = logging.getLogger("camwatch")
 
 _SYSTEM = (
     "You classify one traffic or coastal camera frame for a flood safety demo. "
@@ -52,18 +59,36 @@ class VisionError(Exception):
     pass
 
 
+def grok_max_rpm(env: dict[str, str] | None = None) -> int:
+    source = os.environ if env is None else env
+    raw = (source.get("GROK_MAX_RPM") or "").strip()
+    if not raw:
+        return DEFAULT_GROK_MAX_RPM
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        logger.warning("GROK_MAX_RPM is not an integer; Grok vision is off")
+        return 0
+
+
 def build_classifier(env: dict[str, str] | None = None) -> "Classifier":
-    """Use Grok when XAI_API_KEY is set; otherwise the offline fallback."""
+    """Use Grok when XAI_API_KEY is set and GROK_MAX_RPM allows it.
+
+    Missing key, RPM 0, a full minute window, or HTTP 429 all use the
+    offline fallback. The response body from xAI is never logged.
+    """
     source = os.environ if env is None else env
     fallback = FallbackVision()
     key = (source.get("XAI_API_KEY") or "").strip()
-    if not key:
+    rpm = grok_max_rpm(source)
+    if not key or rpm <= 0:
         return fallback
     return GrokVision(
         api_key=key,
         model=(source.get("XAI_VISION_MODEL") or DEFAULT_MODEL).strip() or DEFAULT_MODEL,
         base_url=(source.get("XAI_API_BASE") or XAI_API_BASE).rstrip("/"),
         fallback=fallback,
+        rpm=rpm,
     )
 
 
@@ -107,6 +132,8 @@ class GrokVision(Classifier):
         timeout: float = 30.0,
         fallback: FallbackVision | None = None,
         opener=urllib.request.urlopen,
+        rpm: int | None = None,
+        clock=time.monotonic,
     ) -> None:
         self.api_key = api_key
         self.model = model
@@ -114,14 +141,34 @@ class GrokVision(Classifier):
         self.timeout = timeout
         self.fallback = fallback
         self._opener = opener
+        self._rpm = rpm
+        self._clock = clock
+        self._calls: list[float] = []
 
     def classify(self, frame: Frame) -> VisionResult:
+        if not self._allow():
+            logger.warning("GROK_MAX_RPM reached; using fallback")
+            if self.fallback is None:
+                raise VisionError("GROK_MAX_RPM reached")
+            return self.fallback.classify(frame)
         try:
             return self._call(frame)
         except (VisionError, urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
             if self.fallback is None:
                 raise
             return self.fallback.classify(frame)
+
+    def _allow(self) -> bool:
+        if self._rpm is None:
+            return True
+        if self._rpm <= 0:
+            return False
+        now = self._clock()
+        self._calls = [stamp for stamp in self._calls if now - stamp < 60.0]
+        if len(self._calls) >= self._rpm:
+            return False
+        self._calls.append(now)
+        return True
 
     def _call(self, frame: Frame) -> VisionResult:
         import base64
@@ -163,7 +210,9 @@ class GrokVision(Classifier):
             with self._opener(request, timeout=self.timeout) as response:
                 payload = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
-            # Do not include the request (it carries the bearer token).
+            # Status only. The body and the bearer token stay out of the log.
+            if exc.code == 429:
+                logger.warning("grok vision HTTP 429; using fallback")
             raise VisionError(f"grok vision HTTP {exc.code}") from exc
         content = payload["choices"][0]["message"]["content"]
         return _parse_grok_json(content)

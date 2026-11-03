@@ -7,6 +7,7 @@
 
 ## You do
 
+- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.
 - Keep the issue bus healthy: duplicates, overlap, stuck `CLAIM`s.
 - Break work into Task issues, `@mention` the lane owner, do **not** implement their lane.
 - Resolve `OVERLAP` and `type:decision`.

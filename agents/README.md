@@ -10,4 +10,4 @@ Operating manuals for each teammate's Cursor agent and Grok Bot.
 | `athithan.md` | Grok Bots / demo |
 | `GROKBOTS.md` | Paste-ready Grok Bot instructions |
 
-Law for everyone: [`../AGENTS.md`](../AGENTS.md)
+Law for everyone: [`../AGENTS.md`](../AGENTS.md). Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.

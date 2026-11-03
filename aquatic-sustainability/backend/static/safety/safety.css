@@ -1,0 +1,121 @@
+body.safety-page {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+body.safety-page .workspace,
+body.safety-page .map-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+body.safety-page #map {
+  height: 100%;
+  min-height: 0;
+  cursor: grab;
+  z-index: 1;
+}
+
+body.safety-page #map.is-drawing,
+body.safety-page #map.is-drawing .leaflet-pane {
+  cursor: crosshair;
+}
+
+.float-stack {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1100;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-type-control {
+  display: flex;
+  padding: 4px;
+  gap: 4px;
+  background: var(--card-bg, rgba(15, 23, 42, 0.94));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.map-type-control button,
+.preset-btn {
+  font: inherit;
+  cursor: pointer;
+}
+
+.map-type-control button {
+  flex: 1;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--text, #e7eef6);
+}
+
+.map-type-control button.is-active {
+  background: var(--primary, #e2e8f0);
+  color: #0f172a;
+}
+
+.preset-btn {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: var(--card-bg, rgba(15, 23, 42, 0.94));
+  color: var(--text, #e7eef6);
+  text-align: left;
+}
+
+.preset-btn.is-active {
+  background: var(--primary, #e2e8f0);
+  color: #0f172a;
+}
+
+.bbox-card {
+  background: var(--card-bg, rgba(15, 23, 42, 0.94));
+  border: 1px solid var(--border, rgba(56, 189, 248, 0.45));
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  color: var(--text, #e7eef6);
+}
+
+.bbox-card p { margin: 0 0 8px; color: var(--muted, #94a3b8); }
+
+.bbox-card h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.bbox-card dl { margin: 0; }
+
+.bbox-card div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.bbox-card dt { color: var(--muted, #94a3b8); }
+
+.bbox-card dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+#bbox-watch {
+  margin: 8px 0 0;
+  color: var(--primary, #7dd3fc);
+  font-size: 12px;
+  word-break: break-all;
+}

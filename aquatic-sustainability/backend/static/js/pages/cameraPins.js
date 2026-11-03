@@ -165,13 +165,33 @@
     info.open(map);
     google.maps.event.addListenerOnce(info, "closeclick", stop);
   }
+  function viewportBbox(map) {
+    if (!map || typeof map.getBounds !== "function") return null;
+    const b = map.getBounds();
+    if (!b) return null;
+    const sw = b.getSouthWest();
+    const ne = b.getNorthEast();
+    return { minLon: sw.lng(), minLat: sw.lat(), maxLon: ne.lng(), maxLat: ne.lat() };
+  }
+  function inViewport(cam, box) {
+    if (!box) return true;
+    return cam.lon >= box.minLon && cam.lon <= box.maxLon && cam.lat >= box.minLat && cam.lat <= box.maxLat;
+  }
   async function attach(map) {
+    window.floodMap = map;
+    window.__floodMap = map;
     const cameras = await load();
     markers.forEach(function (m) { m.setMap(null); });
     markers = [];
     if (!cameras.length) return;
-    const bounds = new google.maps.LatLngBounds();
-    cameras.forEach(function (cam) {
+    let box = viewportBbox(map);
+    if (!box && google.maps.event) {
+      await new Promise(function (resolve) {
+        google.maps.event.addListenerOnce(map, "idle", resolve);
+      });
+      box = viewportBbox(map);
+    }
+    cameras.filter(function (cam) { return inViewport(cam, box); }).forEach(function (cam) {
       const marker = new google.maps.Marker({
         position: { lat: cam.lat, lng: cam.lon },
         map: map,
@@ -187,9 +207,7 @@
       });
       marker.addListener("click", function () { open(map, cam); });
       markers.push(marker);
-      bounds.extend(marker.getPosition());
     });
-    map.fitBounds(bounds, 48);
   }
   function showStrip(cameras) {
     if (!cameras.length || document.getElementById("camera-demo-strip")) return;
@@ -244,7 +262,12 @@
     document.body.appendChild(wrap);
   }
   window.SafetyCameraPins = { attach: attach, load: load };
-  if (window.__floodMap) attach(window.__floodMap);
+  var existingMap = window.floodMap || window.__floodMap;
+  if (existingMap) {
+    window.floodMap = existingMap;
+    window.__floodMap = existingMap;
+    attach(existingMap);
+  }
   load().then(showStrip).catch(function () {});
 })();
 
@@ -499,13 +522,35 @@
     return bboxFromRegionDetail({ bbox: sr.bbox, minLon: sr.bbox.minLon, minLat: sr.bbox.minLat, maxLon: sr.bbox.maxLon, maxLat: sr.bbox.maxLat });
   }
 
+  function bboxFromMap(map) {
+    if (!map || typeof map.getBounds !== "function") return null;
+    var b = map.getBounds();
+    if (!b) return null;
+    var sw = b.getSouthWest();
+    var ne = b.getNorthEast();
+    return [sw.lng(), sw.lat(), ne.lng(), ne.lat()];
+  }
+
+  function loadViewport(map) {
+    var seed = currentSafetyBbox() || bboxFromMap(map);
+    if (seed) {
+      onRegionEvent({ detail: { bbox: seed } });
+      return true;
+    }
+    return false;
+  }
+
   function attach(map) {
     if (!map || typeof google === "undefined" || !google.maps) return;
     mapRef = map;
+    window.floodMap = map;
+    window.__floodMap = map;
     bindRegionListener();
-    var seed = currentSafetyBbox();
-    if (seed) {
-      onRegionEvent({ detail: { bbox: seed } });
+    if (loadViewport(map)) return;
+    if (google.maps.event) {
+      google.maps.event.addListenerOnce(map, "idle", function () {
+        loadViewport(map);
+      });
     }
   }
 

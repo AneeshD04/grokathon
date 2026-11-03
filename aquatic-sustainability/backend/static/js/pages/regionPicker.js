@@ -1,5 +1,6 @@
 (function regionPicker() {
   var DEFAULT_SOURCES = ["model", "camera", "nws"];
+  var GALVESTON_BBOX = [-95.1544, 29.0668, -94.3684, 29.5931];
   var BUS_URL =
     window.ALERT_BUS_URL ||
     localStorage.getItem("ALERT_BUS_URL") ||
@@ -276,17 +277,18 @@
 
   function applyRegion(opts) {
     var path = opts.path;
-    var bbox = opts.bbox || bboxFromPath(path);
+    var bbox = opts.bbox || (path ? bboxFromPath(path) : null);
     var county = opts.county || null;
-    if (!map) {
-      setStatus("Map still loading…");
-      return;
-    }
-    if (bbox[0] >= bbox[2] || bbox[1] >= bbox[3]) {
+    if (!bbox || bbox[0] >= bbox[2] || bbox[1] >= bbox[3]) {
       setStatus("Need a box with width and height.");
       return;
     }
-    showPath(path);
+    if (map && path) {
+      showPath(path);
+    } else if (!county) {
+      setStatus("Map still loading…");
+      return;
+    }
     current.county = county;
     current.bbox = bbox;
     setCountyButtons(county ? county.id : null);
@@ -313,6 +315,19 @@
   function watchCounty(id) {
     stopDrawing();
     var county = window.oemCountyById ? window.oemCountyById(id) : null;
+    if (!county && id === "galveston-county") {
+      county = {
+        id: id,
+        name: "Galveston County",
+        bbox: GALVESTON_BBOX.slice(),
+        path: [
+          { lat: GALVESTON_BBOX[1], lng: GALVESTON_BBOX[0] },
+          { lat: GALVESTON_BBOX[1], lng: GALVESTON_BBOX[2] },
+          { lat: GALVESTON_BBOX[3], lng: GALVESTON_BBOX[2] },
+          { lat: GALVESTON_BBOX[3], lng: GALVESTON_BBOX[0] },
+        ],
+      };
+    }
     if (!county) {
       setStatus("Unknown county.");
       return;
@@ -417,6 +432,8 @@
   function attachMap(nextMap) {
     if (!nextMap || map === nextMap) return;
     map = nextMap;
+    window.floodMap = nextMap;
+    window.__floodMap = nextMap;
     pixelProbe = new google.maps.OverlayView();
     pixelProbe.onAdd = function () {};
     pixelProbe.draw = function () {};
@@ -424,6 +441,8 @@
     map.getDiv().addEventListener("mousedown", onDragDown, true);
     if (current.bbox && current.county) {
       showPath(current.county.path);
+    } else if (current.bbox) {
+      restoreCommitted();
     }
   }
 
@@ -435,6 +454,7 @@
       var instance = new Original(el, opts);
       if (el && el.id === "map") {
         window.floodMap = instance;
+        window.__floodMap = instance;
         window.dispatchEvent(new CustomEvent("flood-map-ready", { detail: { map: instance } }));
       }
       return instance;
@@ -447,8 +467,11 @@
 
   function waitForMap() {
     hookGoogleMap();
-    if (window.floodMap) {
-      attachMap(window.floodMap);
+    var existing = window.floodMap || window.__floodMap;
+    if (existing) {
+      window.floodMap = existing;
+      window.__floodMap = existing;
+      attachMap(existing);
       return;
     }
     setTimeout(waitForMap, 50);

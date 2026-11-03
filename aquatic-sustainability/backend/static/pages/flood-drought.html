@@ -164,6 +164,15 @@
     margin-top: 8px;
   }
 
+  .oem-status {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+    max-width: 260px;
+    word-break: break-word;
+  }
+
   .modal-overlay {
     position: fixed;
     top: 0;
@@ -462,6 +471,20 @@
   <div class="toggle-buttons">
     <button class="toggle-btn flood-active" id="toggleFlood">💧 Flood</button>
     <button class="toggle-btn drought-active" id="toggleDrought">🌵 Drought</button>
+  </div>
+
+  <div class="filter-section" id="oem-watch">
+    <div class="filter-title">County OEM watch</div>
+    <div class="filter-label" style="min-width:0;margin-bottom:8px;">Local government marks a county or box. Subscribes BDBI analysis.</div>
+    <div class="toggle-buttons">
+      <button type="button" class="toggle-btn" id="watchGalveston">Galveston</button>
+      <button type="button" class="toggle-btn" id="watchHarris">Harris</button>
+    </div>
+    <div class="toggle-buttons">
+      <button type="button" class="toggle-btn" id="drawWatchBox">Draw box</button>
+      <button type="button" class="toggle-btn" id="clearWatchBox">Clear</button>
+    </div>
+    <div class="oem-status" id="oemWatchStatus">No watch yet.</div>
   </div>
 
   <div class="filter-section" id="oem-alerts">
@@ -1206,6 +1229,8 @@
       center: { lat: 8.0, lng: 110.0 },
       mapTypeId: "terrain",
     });
+    window.floodMap = map;
+    window.dispatchEvent(new CustomEvent("flood-map-ready", { detail: { map: map } }));
 
     // Close any open popup when clicking the map background
     map.addListener('click', () => {
@@ -1342,5 +1367,7 @@
 <script src="/static/js/pages/floodDrought.js" defer></script>
 <script src="/static/js/pages/safety-alerts.js" defer></script>
 <script src="/static/js/pages/safety-notify.js" defer></script>
+<script src="/static/js/pages/counties.js" defer></script>
+<script src="/static/js/pages/regionPicker.js" defer></script>
 </body>
 </html>

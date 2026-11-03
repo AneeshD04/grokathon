@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notify impacted businesses · Galveston County OEM</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <link rel="stylesheet" href="confirm-send.css" />
+</head>
+<body>
+  <div id="map"></div>
+  <section class="oem-panel" aria-label="County OEM">
+    <p class="oem-kicker">County OEM console</p>
+    <h1>Galveston County businesses</h1>
+    <p id="business-banner">Loading businesses in the Galveston County extent.</p>
+    <button type="button" id="notify-open">Notify impacted businesses</button>
+    <section id="send-log" hidden>
+      <h2>Dry-run log</h2>
+      <p id="log-status"></p>
+      <p>Mode: <span id="log-mode"></span></p>
+      <p>When: <span id="log-when"></span></p>
+      <p id="log-ipaws"></p>
+      <p id="log-residents"></p>
+      <p>Intended businesses (not contacted)</p>
+      <ul id="log-businesses"></ul>
+      <p>Orgs that would have been notified (not contacted)</p>
+      <ul id="log-orgs"></ul>
+    </section>
+  </section>
+
+  <div id="confirm-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 id="modal-title">Notify impacted businesses</h2>
+      <p class="draft" id="draft-message"></p>
+      <p>Businesses in the polygon: <strong id="business-count">0</strong></p>
+      <ul id="modal-businesses"></ul>
+      <p id="resident-line">no list uploaded — public SMS skipped</p>
+      <p>Would have notified (display only, not contacted)</p>
+      <ul id="org-list"></ul>
+      <label>
+        <input type="checkbox" id="ipaws-stub" />
+        Submit to IPAWS/WEA — would submit this polygon and message to IPAWS-OPEN. Not connected. Does not send.
+      </label>
+      <label class="pin-row" for="approval-pin">
+        Approval PIN
+        <input id="approval-pin" type="password" autocomplete="off" />
+      </label>
+      <p id="pin-error" hidden></p>
+      <div class="modal-actions">
+        <button type="button" id="confirm-cancel">Cancel</button>
+        <button type="button" id="confirm-submit">Confirm dry-run</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="businesses.js"></script>
+  <script src="business-pins.js"></script>
+  <script src="confirm-send.js"></script>
+  <script>
+    (function () {
+      const county = SafetyBusinesses.galveston;
+      const bounds = L.latLngBounds([county.south, county.west], [county.north, county.east]);
+      const map = L.map("map", { zoomControl: true }).fitBounds(bounds);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap",
+      }).addTo(map);
+      L.rectangle(bounds, {
+        color: "#14532d",
+        weight: 2,
+        fillOpacity: 0.08,
+      }).addTo(map);
+
+      let current = [];
+
+      function banner(result) {
+        const node = document.getElementById("business-banner");
+        if (!result.businesses.length) {
+          node.textContent = "No businesses in this box.";
+          return;
+        }
+        const via = result.source === "google" ? "Places" : "fixture list (no phone numbers)";
+        const cap = result.truncated ? " List is capped." : "";
+        node.textContent = result.businesses.length + " businesses from the " + via + "." + cap;
+      }
+
+      SafetyBusinesses.nearby(county).then(function (result) {
+        current = result.businesses;
+        banner(result);
+        SafetyBusinessPins.draw(map, current);
+        if (current.length) {
+          const group = L.latLngBounds(current.map(function (biz) {
+            return [biz.lat, biz.lon];
+          }));
+          map.fitBounds(group.pad(0.4));
+        }
+      });
+
+      document.getElementById("notify-open").addEventListener("click", function () {
+        SafetyConfirmSend.open(current);
+      });
+    })();
+  </script>
+</body>
+</html>

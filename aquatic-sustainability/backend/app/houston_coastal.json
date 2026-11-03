@@ -1,0 +1,322 @@
+[
+  {
+    "id": "transtar-180",
+    "name": "Galveston Ferry @ Galveston Ferry Landing",
+    "lat": 29.326965,
+    "lon": -94.772842,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/180.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-177",
+    "name": "Galveston Ferry @ HarborSide (N)",
+    "lat": 29.3143,
+    "lon": -94.77071,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/177.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-181",
+    "name": "Bolivar Ferry @ French Town Rd.",
+    "lat": 29.36452,
+    "lon": -94.7747,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/181.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-182",
+    "name": "Bolivar Ferry @ 7th",
+    "lat": 29.3671,
+    "lon": -94.7612,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/182.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-173",
+    "name": "45 GULF @ 61ST (W)",
+    "lat": 29.288568,
+    "lon": -94.838279,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/173.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-164",
+    "name": "45 GULF @ CAUSEWAY (N)",
+    "lat": 29.30133,
+    "lon": -94.89771,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/164.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-163",
+    "name": "45 GULF @ TIKI ISLAND",
+    "lat": 29.30982,
+    "lon": -94.907671,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/163.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-129",
+    "name": "45 Gulf @ Bay Area Blvd",
+    "lat": 29.54079,
+    "lon": -95.14238,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/129.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-130",
+    "name": "45 Gulf @ Nasa Rd 1",
+    "lat": 29.52855,
+    "lon": -95.13016,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/130.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-1816",
+    "name": "NASA 1 @ SH-146",
+    "lat": 29.563873,
+    "lon": -95.025773,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/1816.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-9039",
+    "name": "SH-35 at Orange St",
+    "lat": 29.569109,
+    "lon": -95.286374,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/9039.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": true
+  },
+  {
+    "id": "transtar-644",
+    "name": "610 SOUTH LOOP @ OLD GALVESTON",
+    "lat": 29.702766,
+    "lon": -95.277791,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/644.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "transtar-9061",
+    "name": "SH288 @ MacGregor (Brays Bayou)",
+    "lat": 29.7127,
+    "lon": -95.3777,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/9061.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "transtar-3524",
+    "name": "West Park @ Brays Bayou",
+    "lat": 29.71582,
+    "lon": -95.58717,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/3524.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "transtar-4202",
+    "name": "FBTR @ Sims Bayou",
+    "lat": 29.6264,
+    "lon": -95.4828,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/4202.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "transtar-1145",
+    "name": "W Sam Hou/BW8 @ Buffalo Bayou",
+    "lat": 29.76302,
+    "lon": -95.55827,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/1145.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "transtar-1226",
+    "name": "69 Eastex @ Greens Bayou",
+    "lat": 29.918085,
+    "lon": -95.30757,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/1226.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "transtar-10000",
+    "name": "US-90 @ Hunting Bayou",
+    "lat": 29.788556,
+    "lon": -95.240142,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/10000.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "transtar-8024",
+    "name": "Buffalo Speedway@N Braeswood",
+    "lat": 29.696427,
+    "lon": -95.427045,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/8024.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "transtar-620",
+    "name": "610 WEST LOOP @ MEMORIAL",
+    "lat": 29.773165,
+    "lon": -95.456172,
+    "still_url": "https://www.houstontranstar.org/snapshots/cctv/620.jpg",
+    "hls_url": null,
+    "source": "transtar",
+    "coastal": false
+  },
+  {
+    "id": "fl511-1004",
+    "name": "Courtney Campbell Causeway at MM PIN 08.3 (SR 60)",
+    "lat": 27.961232,
+    "lon": -82.695644,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-10978_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-1006",
+    "name": "Courtney Campbell Causeway at MM PIN 10.2 (SR 60)",
+    "lat": 27.965312,
+    "lon": -82.664535,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-10465_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-3066",
+    "name": "CR-611 at MM 0 (CR 611/Bayside Bridge)",
+    "lat": 27.919865,
+    "lon": -82.699084,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-10926_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-689",
+    "name": "West of Gandy Bridge (SR 600/Gandy Blvd)",
+    "lat": 27.878444,
+    "lon": -82.585328,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-10464_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-897",
+    "name": "SR 600/Gandy Blvd at Brighton Bay",
+    "lat": 27.868011,
+    "lon": -82.624615,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-4478_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-916",
+    "name": "West of Delgado Mem. Bridge (SR 682/Pinellas Bayway)",
+    "lat": 27.708791,
+    "lon": -82.730555,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-10169_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-917",
+    "name": "East of Delgado Mem. Bridge (SR 682/Pinellas Bayway)",
+    "lat": 27.709686,
+    "lon": -82.7225,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-4525_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-918",
+    "name": "SR 682/Pinellas Bayway at Sun Blvd",
+    "lat": 27.712775,
+    "lon": -82.714722,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-4512_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-920",
+    "name": "SR 682/Pinellas Bayway at Toll Plaza",
+    "lat": 27.719238,
+    "lon": -82.694166,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-4514_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-3226",
+    "name": "Ramp to 54th Ave S (SR 682/Pinellas Bayway)",
+    "lat": 27.718838,
+    "lon": -82.6825,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-10889_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-2665",
+    "name": "SR 679 - NORTH SIDE OF BRIDGE (SR 679/Pinellas Bayway)",
+    "lat": 27.705163,
+    "lon": -82.713675,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-10460_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  },
+  {
+    "id": "fl511-727",
+    "name": "I-275 N at 13.9 NB",
+    "lat": 27.6646,
+    "lon": -82.6771,
+    "still_url": "https://images-dis.divas.cloud/DGI/chan-10996_h.jpg",
+    "hls_url": null,
+    "source": "fl511",
+    "coastal": true
+  }
+]

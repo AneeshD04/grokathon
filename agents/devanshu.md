@@ -9,7 +9,7 @@
 
 ## You do
 
-- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase).
+- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.
 - **Build on the existing Flask app** in `aquatic-sustainability/backend/`. Additive endpoints (cameras, watches, alerts, Safety Agent proxy). Do not rewrite DualCNN-LSTM or start a new server in `/backend`.
 - Env for backend secrets: copy repo-root `.env.example` → `aquatic-sustainability/backend/.env` (gitignored).
 - Publish contracts into `shared/` only after a `lane:shared` issue `@mentions` `@buzzkabir` (and Athithan if bots consume it).

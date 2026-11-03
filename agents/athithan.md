@@ -9,7 +9,7 @@
 
 ## You do
 
-- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase).
+- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.
 - Grok Bot routines and demo glue that sit **on top of** the BDBI app.
 - Coordinate with `@buzzkabir` for `/safety` surfaces and `@DevanshuShahs` for `/api/watches` + `/api/alerts`.
 

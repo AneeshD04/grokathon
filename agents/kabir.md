@@ -9,7 +9,7 @@
 
 ## You do
 
-- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase).
+- Sync to latest `origin/main` before you edit or push (`git fetch origin && git pull --ff-only` or rebase). Product lives in `aquatic-sustainability/`.
 - **Build on the existing static UI.** Add `/safety` (drawer, camera pins, alert feed) without destroying the old flood/coral/oil pages — judges need both.
 - Consume backend contracts from `shared/`; if the contract is wrong, ping `@DevanshuShahs` on the contract issue — do not silently reshape the API.
 - Mock in static JS only until the Flask route lands. Do not start a parallel React app in `/frontend`.

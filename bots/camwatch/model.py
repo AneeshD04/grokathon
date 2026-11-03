@@ -112,7 +112,7 @@ class VisionResult:
     confidence: float
     summary: str
     uncertain: bool
-    backend: str  # "grok" or "fallback"
+    backend: str  # "grok", "fallback", or "heuristic"
 
 
 def canonical_class(value: str) -> str | None:

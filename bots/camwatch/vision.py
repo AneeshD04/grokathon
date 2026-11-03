@@ -1,8 +1,9 @@
 """Map grok_client labels onto the #17 alert classes.
 
-Live frames go through ``grok_client.classify_frame`` (env or the gitignored
-.env). The filename/sidecar fallback runs only when that call raises
-``GrokClientError``, or when the caller asked for the fixture classifier.
+Default live path is FAST/heuristic JPEG color (no Grok). ``--vision grok``
+is one ``grok_client.classify_frame`` then exit. The filename/sidecar
+fallback runs when Grok raises ``GrokClientError``, or when the caller
+asked for the fixture classifier.
 
 grok_client label → alert class:
   dry              → all_clear
@@ -73,16 +74,23 @@ def grok_max_rpm(env: dict[str, str] | None = None) -> int:
         return 0
 
 
-def build_classifier(env: dict[str, str] | None = None, *, fixture: bool = False) -> "Classifier":
-    """Live path uses grok_client. An explicit fixture env does not call xAI.
+def build_classifier(
+    env: dict[str, str] | None = None,
+    *,
+    fixture: bool = False,
+    vision: str | None = None,
+) -> "Classifier":
+    """FAST heuristic by default. ``vision='grok'`` is the capped xAI path.
 
-    ``env={}`` or ``fixture=True`` is the flooded-road test path. ``env is
-    None`` (the CLI default) lets grok_client read the process environment
-    and, if that is empty, the gitignored .env file.
+    ``env={}`` or ``fixture=True`` is the flooded-road test path and does
+    not call xAI. ``vision='fast'`` is the demo default from the CLI.
     """
     fallback = FallbackVision()
-    if fixture:
+    mode = (vision or "").strip().lower()
+    if fixture or mode == "fixture":
         return fallback
+    if mode == "fast":
+        return HeuristicVision()
     if env is not None and (not (env.get("XAI_API_KEY") or "").strip() or grok_max_rpm(env) <= 0):
         return fallback
     rpm = grok_max_rpm(None if env is None else env)
@@ -92,6 +100,41 @@ def build_classifier(env: dict[str, str] | None = None, *, fixture: bool = False
 class Classifier:
     def classify(self, frame: Frame) -> VisionResult:
         raise NotImplementedError
+
+
+class HeuristicVision(Classifier):
+    """Filename/sidecar first, then FAST pixel flood/water. Never calls xAI."""
+
+    def classify(self, frame: Frame) -> VisionResult:
+        sidecar = _read_sidecar(frame.path)
+        if sidecar is not None:
+            return sidecar
+        name = (frame.filename or "").lower()
+        for tokens, vision_class in _FILENAME_RULES:
+            if any(token in name for token in tokens):
+                return FallbackVision().classify(frame)
+        from camwatch.heuristic import class_from_rgb, mean_rgb
+
+        rgb = mean_rgb(frame.jpeg)
+        if rgb is None:
+            return VisionResult(
+                vision_class="all_clear",
+                confidence=0.2,
+                summary="Vision: FAST color sample unavailable; no Grok call.",
+                uncertain=True,
+                backend="heuristic",
+            )
+        vision_class, confidence, uncertain = class_from_rgb(*rgb)
+        summary = DEFAULT_SUMMARY[vision_class]
+        if vision_class != "all_clear":
+            summary = f"FAST color: {summary}"
+        return VisionResult(
+            vision_class=vision_class,
+            confidence=confidence,
+            summary=summary,
+            uncertain=uncertain,
+            backend="heuristic",
+        )
 
 
 class FallbackVision(Classifier):

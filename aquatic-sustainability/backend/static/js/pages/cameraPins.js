@@ -189,7 +189,9 @@
       markers.push(marker);
       bounds.extend(marker.getPosition());
     });
-    map.fitBounds(bounds, 48);
+    const center = map.getCenter && map.getCenter();
+    const stillDefault = !center || (Math.abs(center.lat() - 8) < 1 && Math.abs(center.lng() - 110) < 1);
+    if (stillDefault) map.fitBounds(bounds, 48);
   }
   function showStrip(cameras) {
     if (!cameras.length || document.getElementById("camera-demo-strip")) return;
@@ -204,6 +206,7 @@
       img.alt = cam.name;
       img.src = cam.still_url;
       img.style.cssText = "display:block;width:100%;height:90px;object-fit:cover;background:#111;";
+      img.addEventListener("error", function () { btn.remove(); });
       const cap = document.createElement("div");
       cap.textContent = cam.name;
       cap.style.cssText = "padding:6px 8px;font:12px/1.3 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
@@ -403,7 +406,7 @@
       src +
       '" alt="' +
       name +
-      '" width="300" height="169" style="display:block;width:100%;max-width:300px;height:auto;border-radius:6px;background:#0f172a;" />' +
+      '" width="300" height="169" style="display:block;width:100%;max-width:300px;height:auto;border-radius:6px;background:#0f172a;" onerror="this.replaceWith(document.createTextNode(\'Still unavailable\'))" />' +
       (source
         ? '<div style="font-size:11px;color:#6b7280;margin-top:6px;">Source: ' + source + "</div>"
         : "") +

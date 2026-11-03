@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Safety</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script>
+    window.SafetyBus = {
+      _handlers: {},
+      on: function (name, fn) {
+        (this._handlers[name] || (this._handlers[name] = [])).push(fn);
+      },
+      emit: function (name, payload) {
+        (this._handlers[name] || []).forEach(function (fn) { fn(payload); });
+      },
+    };
+    var map = L.map("map", { worldCopyJump: true, minZoom: 2 }).setView([27.5, -81.5], 6);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(map);
+    window.SafetyMap = {
+      getMap: function () { return map; },
+    };
+  </script>
+  <script src="cameras.js"></script>
+  <script src="camera-pins.js"></script>
+</body>
+</html>

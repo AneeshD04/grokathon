@@ -65,18 +65,20 @@
   }
 
   function whenMapReady(callback) {
-    if (state.map) {
-      callback(state.map);
-      return;
+    function use(map) {
+      if (!map || !window.google || !google.maps || !google.maps.Marker) return false;
+      state.map = map;
+      callback(map);
+      return true;
     }
+    if (use(state.map || window.floodMap || window.map)) return;
+    window.addEventListener("flood-map-ready", function (event) {
+      if (event.detail && event.detail.map) use(event.detail.map);
+    });
     const timer = setInterval(function () {
-      const map = window.map;
-      if (map && window.google && google.maps && google.maps.Marker) {
-        clearInterval(timer);
-        state.map = map;
-        callback(map);
-      }
+      if (use(window.floodMap || window.map)) clearInterval(timer);
     }, 250);
+    setTimeout(function () { clearInterval(timer); }, 8000);
   }
 
   function markerFor(alert) {

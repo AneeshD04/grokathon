@@ -7,8 +7,8 @@
 
   var map = null;
   var overlay = null;
-  var drawClicks = [];
-  var drawMoveListener = null;
+  var pixelProbe = null;
+  var dragStart = null;
   var drawing = false;
   var current = {
     county: null,
@@ -105,6 +105,7 @@
       minLat: bbox[1],
       maxLon: bbox[2],
       maxLat: bbox[3],
+      bbox: bbox.slice(),
       county: current.county,
       watch: current.watch,
       mocked: current.mocked,
@@ -162,7 +163,7 @@
     }
   }
 
-  function showPath(path, color) {
+  function showPath(path, color, fit) {
     if (!map || !window.google || !google.maps) return;
     clearOverlay();
     overlay = new google.maps.Polygon({
@@ -175,6 +176,7 @@
       map: map,
       clickable: false,
     });
+    if (fit === false) return;
     var bounds = new google.maps.LatLngBounds();
     path.forEach(function (pt) {
       bounds.extend(pt);
@@ -184,13 +186,9 @@
 
   function stopDrawing() {
     drawing = false;
-    drawClicks = [];
-    if (drawMoveListener && window.google && google.maps) {
-      google.maps.event.removeListener(drawMoveListener);
-      drawMoveListener = null;
-    }
+    dragStart = null;
     if (map) {
-      map.setOptions({ draggableCursor: null });
+      map.setOptions({ draggable: true, gestureHandling: "auto", draggableCursor: null });
     }
     setCountyButtons(current.county ? current.county.id : null);
   }
@@ -241,19 +239,97 @@
     applyRegion({ county: county, path: county.path, bbox: county.bbox.slice() });
   }
 
-  function onMapClick(e) {
-    if (!drawing) return;
-    drawClicks.push(e.latLng);
-    if (drawClicks.length === 1) {
-      setStatus("Click the opposite corner.");
-      drawMoveListener = map.addListener("mousemove", function (move) {
-        showPath(pathFromCorners(drawClicks[0], move.latLng), "#60a5fa");
+  function latLngFromMouse(ev) {
+    if (!map || !pixelProbe || !window.google || !google.maps) return null;
+    var projection = pixelProbe.getProjection();
+    if (!projection) return null;
+    var rect = map.getDiv().getBoundingClientRect();
+    return projection.fromContainerPixelToLatLng(
+      new google.maps.Point(ev.clientX - rect.left, ev.clientY - rect.top)
+    );
+  }
+
+  function paintDrag(a, b) {
+    var sw = new google.maps.LatLng(Math.min(a.lat(), b.lat()), Math.min(a.lng(), b.lng()));
+    var ne = new google.maps.LatLng(Math.max(a.lat(), b.lat()), Math.max(a.lng(), b.lng()));
+    var bounds = new google.maps.LatLngBounds(sw, ne);
+    if (!overlay || !overlay.setBounds) {
+      clearOverlay();
+      overlay = new google.maps.Rectangle({
+        bounds: bounds,
+        strokeColor: "#60a5fa",
+        strokeOpacity: 0.95,
+        strokeWeight: 2,
+        fillColor: "#60a5fa",
+        fillOpacity: 0.18,
+        map: map,
+        clickable: false,
       });
+    } else {
+      overlay.setBounds(bounds);
+    }
+    return bounds;
+  }
+
+  function restorePreviousOverlay() {
+    if (current.county && current.county.path) {
+      showPath(current.county.path, null, false);
       return;
     }
-    var path = pathFromCorners(drawClicks[0], drawClicks[1]);
-    stopDrawing();
-    applyRegion({ path: path, bbox: bboxFromPath(path), county: null });
+    if (current.bbox) {
+      var b = current.bbox;
+      showPath(
+        [
+          { lat: b[1], lng: b[0] },
+          { lat: b[1], lng: b[2] },
+          { lat: b[3], lng: b[2] },
+          { lat: b[3], lng: b[0] },
+        ],
+        null,
+        false
+      );
+      return;
+    }
+    clearOverlay();
+  }
+
+  function onDragDown(ev) {
+    if (!drawing || ev.button !== 0) return;
+    var node = ev.target;
+    if (node && node.closest && node.closest(".gm-bundled-control, .gm-style-mtc, .gmnoprint")) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    var start = latLngFromMouse(ev);
+    if (!start) return;
+    dragStart = start;
+    var painted = false;
+
+    function onMove(moveEv) {
+      var cur = latLngFromMouse(moveEv);
+      if (!cur || !dragStart) return;
+      paintDrag(dragStart, cur);
+      painted = true;
+    }
+
+    function onUp(upEv) {
+      document.removeEventListener("mousemove", onMove, true);
+      document.removeEventListener("mouseup", onUp, true);
+      var origin = dragStart;
+      var cur = latLngFromMouse(upEv);
+      dragStart = null;
+      if (!origin || !cur) return;
+      if (Math.hypot(upEv.clientX - ev.clientX, upEv.clientY - ev.clientY) < 8) {
+        if (painted) restorePreviousOverlay();
+        setStatus("Drag a wider rectangle.");
+        return;
+      }
+      var path = pathFromCorners(origin, cur);
+      stopDrawing();
+      applyRegion({ path: path, bbox: bboxFromPath(path), county: null });
+    }
+
+    document.addEventListener("mousemove", onMove, true);
+    document.addEventListener("mouseup", onUp, true);
   }
 
   function startDraw() {
@@ -262,7 +338,6 @@
       return;
     }
     drawing = !drawing;
-    drawClicks = [];
     if (!drawing) {
       stopDrawing();
       setStatus(current.bbox ? "Draw cancelled. Previous watch kept." : "No watch yet.");
@@ -270,8 +345,8 @@
     }
     current.county = null;
     setCountyButtons(null);
-    map.setOptions({ draggableCursor: "crosshair" });
-    setStatus("Click two corners to mark a watch box.");
+    map.setOptions({ draggable: false, gestureHandling: "none", draggableCursor: "crosshair" });
+    setStatus("Drag a rectangle on the map.");
     var drawBtn = $("drawWatchBox");
     if (drawBtn) drawBtn.classList.add("flood-active");
   }
@@ -354,7 +429,11 @@
   function attachMap(nextMap) {
     if (!nextMap || map === nextMap) return;
     map = nextMap;
-    map.addListener("click", onMapClick);
+    pixelProbe = new google.maps.OverlayView();
+    pixelProbe.onAdd = function () {};
+    pixelProbe.draw = function () {};
+    pixelProbe.setMap(map);
+    map.getDiv().addEventListener("mousedown", onDragDown, true);
     if (current.bbox && current.county) {
       showPath(current.county.path);
     }

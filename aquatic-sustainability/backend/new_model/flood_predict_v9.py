@@ -89,8 +89,8 @@ print("All imports OK.\n", flush=True)
 # 1. CONFIGURATION
 # ═══════════════════════════════════════════════════════════════
 
-EARTHDATA_USER = "albertzheng"
-EARTHDATA_PASS = "Alberbruh321$"
+EARTHDATA_USER = os.environ.get("EARTHDATA_USERNAME")
+EARTHDATA_PASS = os.environ.get("EARTHDATA_PASSWORD")
 CDS_URL = "https://cds.climate.copernicus.eu/api"
 CDS_KEY = "25fec36b-e11f-45fd-9dd9-c16fe4a4d4ee"
 
@@ -246,6 +246,10 @@ def load_model_and_scalers():
 # ═══════════════════════════════════════════════════════════════
 
 def setup_earthdata_auth():
+    if not EARTHDATA_USER or not EARTHDATA_PASS:
+        raise RuntimeError(
+            "Missing Earthdata credentials: EARTHDATA_USERNAME and EARTHDATA_PASSWORD must be set"
+        )
     os.environ["EARTHDATA_USERNAME"] = EARTHDATA_USER
     os.environ["EARTHDATA_PASSWORD"] = EARTHDATA_PASS
     netrc_path = os.path.expanduser("~/.netrc")

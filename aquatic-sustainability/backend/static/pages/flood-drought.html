@@ -1335,7 +1335,10 @@
     });
 
     window.__floodMap = map;
+    window.floodMap = map;
+    window.dispatchEvent(new CustomEvent("flood-map-ready", { detail: { map: map } }));
     if (window.SafetyCameraPins) SafetyCameraPins.attach(map);
+    if (window.SafetyBusinessPins) SafetyBusinessPins.attach(map);
   }
 
 </script>
@@ -1343,8 +1346,28 @@
 <script src="/static/js/components/navbar.js" defer></script>
 <script src="/static/js/main.js" defer></script>
 <script src="/static/js/pages/cameraPins.js"></script>
+<script src="/static/js/pages/businessPins.js"></script>
+<script src="/static/js/pages/roster.js"></script>
 <script src="/static/js/pages/floodDrought.js" defer></script>
 <script src="/static/js/pages/safety-alerts.js" defer></script>
 <script src="/static/js/pages/safety-notify.js" defer></script>
+<script>
+(function () {
+  var tries = 0;
+  var timer = setInterval(function () {
+    tries += 1;
+    var host = document.getElementById("oem-watch");
+    if (host && window.SafetyRoster && !host.querySelector("[data-safety-roster-root]")) {
+      var mount = document.createElement("div");
+      mount.setAttribute("data-safety-roster-root", "1");
+      host.appendChild(mount);
+      window.SafetyRoster.attach(mount);
+    }
+    if ((host && host.querySelector("[data-safety-roster-root]")) || tries > 40) {
+      clearInterval(timer);
+    }
+  }, 200);
+})();
+</script>
 </body>
 </html>

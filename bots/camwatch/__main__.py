@@ -18,6 +18,9 @@ from camwatch.model import MAX_CAMERAS, Camera, check_interval
 from camwatch.vision import build_classifier
 from camwatch.worker import WatchState, run_once
 
+# Preferred Houston watch list. Missing file falls back to the TranStar seed.
+_DEFAULT_HOUSTON = Path(__file__).resolve().parent.parent / "data" / "camwatch_default.json"
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="CamWatch JPEG vision worker")
@@ -25,7 +28,7 @@ def main(argv: list[str] | None = None) -> int:
         "--cameras",
         type=Path,
         default=None,
-        help="Local camera JSON. Default is the TranStar seed (or FL511 with --city pinellas).",
+        help="Local camera JSON. Houston default is camwatch_default.json when that file exists; otherwise the TranStar seed. Pinellas uses the FL511 seed.",
     )
     parser.add_argument(
         "--city",
@@ -96,9 +99,18 @@ def main(argv: list[str] | None = None) -> int:
         else:
             interval = check_interval(args.interval if args.interval is not None else 20)
             max_cameras = MAX_CAMERAS
-            # Vision still samples at most 8. Pinellas keeps the rest of the seed loaded.
-            city_limit = 64 if args.city == "pinellas" else max_cameras
-            cameras = load_city(args.city, city_limit)
+            default_houston = _DEFAULT_HOUSTON if args.city == "houston" and _DEFAULT_HOUSTON.is_file() else None
+            if default_houston is not None:
+                config = load_config(default_houston)
+                interval = check_interval(
+                    args.interval if args.interval is not None else config.interval_seconds
+                )
+                cameras = list(config.cameras)
+                max_cameras = config.max_cameras
+            else:
+                # Vision still samples at most 8. Pinellas keeps the rest of the seed loaded.
+                city_limit = 64 if args.city == "pinellas" else max_cameras
+                cameras = load_city(args.city, city_limit)
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
         log.error("%s", exc)
         return 2

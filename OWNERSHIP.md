@@ -13,7 +13,11 @@ Agents **must not** edit another lane's paths unless a `lane:shared` issue `@men
 | `bots/` | Grok Bot / demo | Athithan (handle in `TEAM.md`) |
 | `shared/` | Shared contracts | **all** — `lane:shared` issue required |
 | `scripts/` | Conductor + whoever is `@mentioned` | default `@AneeshD04` |
+| `docs/` | Conductor | `@AneeshD04` |
 | `README.md` | Conductor, PRs welcome | `@AneeshD04` |
+| `aquatic-sustainability/` | Shared BDBI app snapshot | `lane:shared` until split; see issue #6 |
+| `aquatic-sustainability/backend/` (API after split) | Backend | `@DevanshuShahs` |
+| `aquatic-sustainability/backend/static/` (UI after split) | Frontend | `@buzzkabir` |
 
 If a file is not listed, treat it as `shared/` and open a `type:decision` issue before adding it.
 

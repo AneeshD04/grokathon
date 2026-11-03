@@ -13,3 +13,7 @@ build/
 .turbo/
 *.log
 .cursor/*.log
+*.npy
+*.h5
+aquatic-sustainability/backend/.venv/
+aquatic-sustainability/**/__pycache__/

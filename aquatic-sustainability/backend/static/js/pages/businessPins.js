@@ -292,8 +292,9 @@
   window.addEventListener("safety:region", onRegionEvent);
 
   function bootstrap() {
-    if (window.floodMap) {
-      attach(window.floodMap);
+    var existing = window.floodMap || window.__floodMap;
+    if (existing) {
+      attach(existing);
       return;
     }
     window.addEventListener(

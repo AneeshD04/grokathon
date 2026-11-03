@@ -1333,12 +1333,16 @@
 
       droughtPolygons.push(polygon);
     });
+
+    window.__floodMap = map;
+    if (window.SafetyCameraPins) SafetyCameraPins.attach(map);
   }
 
 </script>
 
 <script src="/static/js/components/navbar.js" defer></script>
 <script src="/static/js/main.js" defer></script>
+<script src="/static/js/pages/cameraPins.js"></script>
 <script src="/static/js/pages/floodDrought.js" defer></script>
 <script src="/static/js/pages/safety-alerts.js" defer></script>
 <script src="/static/js/pages/safety-notify.js" defer></script>

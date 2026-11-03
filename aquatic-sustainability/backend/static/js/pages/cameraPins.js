@@ -191,8 +191,61 @@
     });
     map.fitBounds(bounds, 48);
   }
+  function showStrip(cameras) {
+    if (!cameras.length || document.getElementById("camera-demo-strip")) return;
+    const bar = document.createElement("div");
+    bar.id = "camera-demo-strip";
+    bar.style.cssText = "position:fixed;z-index:50;left:12px;right:12px;bottom:12px;display:flex;gap:8px;overflow:auto;padding:8px;background:rgba(15,23,42,.94);border-radius:12px;border:1px solid rgba(255,255,255,.12);";
+    cameras.slice(0, 6).forEach(function (cam) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.style.cssText = "flex:0 0 180px;padding:0;border:0;border-radius:8px;overflow:hidden;background:#0f172a;color:#e7eef6;text-align:left;cursor:pointer;";
+      const img = document.createElement("img");
+      img.alt = cam.name;
+      img.src = cam.still_url;
+      img.style.cssText = "display:block;width:100%;height:90px;object-fit:cover;background:#111;";
+      const cap = document.createElement("div");
+      cap.textContent = cam.name;
+      cap.style.cssText = "padding:6px 8px;font:12px/1.3 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+      btn.append(img, cap);
+      btn.addEventListener("click", function () { showFeed(cam); });
+      bar.appendChild(btn);
+    });
+    document.body.appendChild(bar);
+  }
+  function showFeed(cam) {
+    const old = document.getElementById("camera-demo-feed");
+    if (old) old.remove();
+    stop();
+    const wrap = document.createElement("div");
+    wrap.id = "camera-demo-feed";
+    wrap.style.cssText = "position:fixed;z-index:60;left:50%;bottom:132px;transform:translateX(-50%);width:min(420px,calc(100% - 24px));background:#fff;color:#0f172a;border-radius:12px;padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.35);";
+    const title = document.createElement("strong");
+    title.textContent = cam.name;
+    const meta = document.createElement("div");
+    meta.style.cssText = "color:#475569;margin:2px 0 8px;font:13px/1.35 system-ui,sans-serif;";
+    meta.textContent = [cam.county, cam.highway, cam.alertEvent, "Live still"].filter(Boolean).join(" · ");
+    const img = document.createElement("img");
+    img.alt = cam.name;
+    img.style.cssText = "display:block;width:100%;height:220px;object-fit:cover;background:#0f172a;border-radius:8px;";
+    function tick() {
+      const url = new URL(cam.still_url);
+      url.searchParams.set("t", String(Date.now()));
+      img.src = url.toString();
+    }
+    tick();
+    timer = setInterval(tick, 5000);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "Close";
+    close.style.cssText = "margin-top:8px;";
+    close.addEventListener("click", function () { stop(); wrap.remove(); });
+    wrap.append(title, meta, img, close);
+    document.body.appendChild(wrap);
+  }
   window.SafetyCameraPins = { attach: attach, load: load };
   if (window.__floodMap) attach(window.__floodMap);
+  load().then(showStrip).catch(function () {});
 })();
 
 (function safetyCameraPins() {
